@@ -72,8 +72,11 @@ async def main():
             print(response.json())
             status = response.json()['status']
             print(f"Status: {status}")
+
+            if status == "Restart":
+                subprocess.Popen(["reboot"])
             
-            if not status == "NoChange":
+            else:
                 try:
                     kill(chrome.pid)
                 except:
@@ -83,8 +86,7 @@ async def main():
                 # chrome = startDisplay(status, controlFile)
                 chrome = startDisplay(signageFile)
 
-            elif status == "Restart":
-                subprocess.Popen(["reboot"])
+
 
             input("Press any key")
 
