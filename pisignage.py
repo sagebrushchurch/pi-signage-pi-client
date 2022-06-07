@@ -82,7 +82,10 @@ async def main():
                 signageFile = response.json()['contentPath']
                 # chrome = startDisplay(status, controlFile)
                 chrome = startDisplay(signageFile)
-            input("Press any key")
 
+            elif status == "Restart":
+                subprocess.Popen(["reboot"])
+
+            input("Press any key")
 
 asyncio.run(main())
