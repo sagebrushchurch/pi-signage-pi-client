@@ -75,6 +75,9 @@ async def main():
 
             if status == "Restart":
                 os.system("sudo reboot")
+
+            elif status =="NoChange":
+                print("do nothing")
             
             else:
                 try:
