@@ -74,7 +74,7 @@ async def main():
             print(f"Status: {status}")
 
             if status == "Restart":
-                subprocess.Popen(["reboot"])
+                os.system("sudo reboot")
             
             else:
                 try:
