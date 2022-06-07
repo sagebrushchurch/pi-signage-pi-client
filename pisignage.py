@@ -79,7 +79,7 @@ async def main():
             elif status =="NoChange":
                 print("do nothing")
             
-            elif status == "Redownload Content"
+            elif status == "Redownload Content":
                 print("downloading")
             
             else:
