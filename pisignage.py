@@ -81,6 +81,15 @@ async def main():
             
             elif status == "Redownload Content":
                 print("downloading")
+
+            elif status == "Turn On TV":
+                print("turning on tv")
+
+            elif status == "Turn Off TV":
+                print("turning off tv")
+
+            elif status == "Upload Screenshot":
+                print("uploading")
             
             else:
                 try:
