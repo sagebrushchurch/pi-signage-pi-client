@@ -73,23 +73,11 @@ async def main():
             status = response.json()['status']
             print(f"Status: {status}")
 
-            if status == "Restart":
-                os.system("sudo reboot")
+            if status == "Command":
+                print("do command things")
 
             elif status =="NoChange":
                 print("do nothing")
-            
-            elif status == "Redownload Content":
-                print("downloading")
-
-            elif status == "Turn On TV":
-                print("turning on tv")
-
-            elif status == "Turn Off TV":
-                print("turning off tv")
-
-            elif status == "Upload Screenshot":
-                print("uploading")
             
             else:
                 try:
