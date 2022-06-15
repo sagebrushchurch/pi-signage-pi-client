@@ -45,7 +45,7 @@ def startDisplay(signageFile):
     
     os.environ['DISPLAY'] = ':0'
     
-    chrome = subprocess.Popen(["chromium-browser", "--kiosk", "/tmp/controlFile.html"])
+    chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/controlFile.html"])
     
     return chrome
 
