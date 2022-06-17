@@ -10,6 +10,8 @@ import signal
 import psutil
 import urllib3
 
+BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
+
 
 def md5checksum(fname):
 
@@ -69,7 +71,7 @@ async def main():
             params["name"] = piName
             params["hash"] = hash
 
-            response = await client.post('https://pisignage.sagebrush.dev/pisignage_api/piConnect', json=params)
+            response = await client.post(f'{BASE_URL}/piConnect', json=params)
             print(response)
             print(response.json())
             status = response.json()['status']
@@ -96,7 +98,7 @@ async def main():
             with open(f'/tmp/{piName}.png') as fp:
                 file_data = fp.read()
             r = http.request(
-                'POST','https://pisignage.sagebrush.dev/pisignage_api/UploadPiScreenshot',
+                'POST',f'{BASE_URL}/UploadPiScreenshot',
                 fields={'file': file_data, 'piName': piName}
             )
             print(r.json())
