@@ -93,7 +93,8 @@ async def main():
                 chrome = startDisplay(status, controlFile, signageFile)
                 # chrome = startDisplay(signageFile)
 
-            raspi2png = subprocess.Popen(["DISPLAY=:0 scrot", "-o", "-z", "/tmp/`hostname`.png"])
+            os.environ['DISPLAY'] = ':0'
+            raspi2png = subprocess.Popen(["scrot", "-o", "-z", "/tmp/`hostname`.png"])
 
             with open(f'/tmp/{piName}.png') as fp:
                 file_data = fp.read()
