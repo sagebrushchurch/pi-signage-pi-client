@@ -98,7 +98,10 @@ async def main():
 
             with open(f'/tmp/{piName}.png', 'rb') as fp:
                 file_data = fp.read()
-            r = requests.post(f'{BASE_URL}/UploadPiScreenshot', file=file_data, piName=piName)
+            params2 = {}
+            params2["file"] = file_data
+            params2["piName"] = piName
+            r = requests.post(f'{BASE_URL}/UploadPiScreenshot', file=file_data)
             print(r)
 
 
