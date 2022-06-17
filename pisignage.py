@@ -8,7 +8,7 @@ import subprocess
 import time
 import signal
 import psutil
-import urllib3
+import requests
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
@@ -98,12 +98,8 @@ async def main():
 
             with open(f'/tmp/{piName}.png', 'rb') as fp:
                 file_data = fp.read()
-            r = urllib3.request.Request(
-                'POST',
-                f'{BASE_URL}/UploadPiScreenshot',
-                fields={'file': file_data, 'piName': piName}
-            )
-            print(r.json())
+            r = requests.post(f'{BASE_URL}/UploadPiScreenshot', file=file_data, piName=piName)
+            print(r)
 
 
             input("Press any key")
