@@ -8,7 +8,6 @@ import subprocess
 import time
 import signal
 import psutil
-import requests
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
@@ -95,13 +94,10 @@ async def main():
 
             os.environ['DISPLAY'] = ':0'
             raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
-
-            with open(f'/tmp/{piName}.png', 'rb') as fp:
-                file_data = fp.read()
-            params2 = {}
-            params2["file"] = file_data
-            params2["piName"] = piName
-            r = requests.post(f'{BASE_URL}/UploadPiScreenshot', file=file_data)
+            
+            data = {'piName': piName}
+            files = {'file': open(f'/tmp/{piName}.png', 'rb')}
+            r = await client.post(f'{BASE_URL}/UploadPiScreenshot')
             print(r)
 
 
