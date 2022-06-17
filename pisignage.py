@@ -8,6 +8,7 @@ import subprocess
 import time
 import signal
 import psutil
+import urllib3
 
 
 def md5checksum(fname):
@@ -64,7 +65,8 @@ async def main():
                 
             print(f"Pi Hash: {hash}")
             params = {}
-            params["name"] = os.uname()[1]
+            piName = os.uname()[1]
+            params["name"] = piName
             params["hash"] = hash
 
             response = await client.post('https://pisignage.sagebrush.dev/pisignage_api/piConnect', json=params)
@@ -89,6 +91,15 @@ async def main():
                 chrome = startDisplay(status, controlFile)
                 # chrome = startDisplay(signageFile)
 
+            raspi2png = subprocess.Popen(["DISPLAY=:0", "scrot", "-o", "-z", "/tmp/`hostname`.png"])
+
+            with open(f'/tmp/{piName}.png') as fp:
+                file_data = fp.read()
+            r = http.request(
+                'POST','https://pisignage.sagebrush.dev/pisignage_api/UploadPiScreenshot',
+                fields={'file': file_data, 'piName': piName}
+            )
+            print(r.json())
 
 
             input("Press any key")
