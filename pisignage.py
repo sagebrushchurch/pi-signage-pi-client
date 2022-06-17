@@ -31,7 +31,7 @@ def kill(proc_pid):
         proc.kill()
     process.kill()
     
-def startDisplay(status, controlFile):
+def startDisplay(status, controlFile, signageFile):
 # def startDisplay(signageFile):
         
     if os.path.exists('/tmp/signageFile'):
@@ -90,7 +90,7 @@ async def main():
                     print("chrome was not running?")
                 controlFile = response.json()['scriptPath']
                 signageFile = response.json()['contentPath']
-                chrome = startDisplay(status, controlFile)
+                chrome = startDisplay(status, controlFile, signageFile)
                 # chrome = startDisplay(signageFile)
 
             raspi2png = subprocess.Popen(["DISPLAY=:0", "scrot", "-o", "-z", "/tmp/`hostname`.png"])
