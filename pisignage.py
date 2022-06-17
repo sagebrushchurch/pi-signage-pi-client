@@ -96,7 +96,7 @@ async def main():
             os.environ['DISPLAY'] = ':0'
             raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
 
-            with open(f'/tmp/{piName}.png') as fp:
+            with open(f'/tmp/{piName}.png', 'rb') as fp:
                 file_data = fp.read()
             r = http.request(
                 'POST',f'{BASE_URL}/UploadPiScreenshot',
