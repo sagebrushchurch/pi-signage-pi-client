@@ -96,13 +96,13 @@ async def main():
             os.environ['DISPLAY'] = ':0'
             raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
 
-            # with open(f'/tmp/{piName}.png') as fp:
-            #     file_data = fp.read()
-            # r = http.request(
-            #     'POST',f'{BASE_URL}/UploadPiScreenshot',
-            #     fields={'file': file_data, 'piName': piName}
-            # )
-            # print(r.json())
+            with open(f'/tmp/{piName}.png') as fp:
+                file_data = fp.read()
+            r = http.request(
+                'POST',f'{BASE_URL}/UploadPiScreenshot',
+                fields={'file': file_data, 'piName': piName}
+            )
+            print(r.json())
 
 
             input("Press any key")
