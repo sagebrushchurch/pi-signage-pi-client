@@ -94,7 +94,7 @@ async def main():
                 # chrome = startDisplay(signageFile)
 
             os.environ['DISPLAY'] = ':0'
-            raspi2png = subprocess.Popen(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
+            raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
 
             with open(f'/tmp/{piName}.png') as fp:
                 file_data = fp.read()
