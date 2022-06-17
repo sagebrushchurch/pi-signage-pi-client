@@ -88,7 +88,7 @@ async def main():
                     kill(chrome.pid)
                 except:
                     print("chrome was not running?")
-                #controlFile = response.json()['controlFile']
+                controlFile = response.json()['controlFile']
                 signageFile = response.json()['contentPath']
                 chrome = startDisplay(status, controlFile)
                 # chrome = startDisplay(signageFile)
