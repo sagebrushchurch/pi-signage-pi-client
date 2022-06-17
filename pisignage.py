@@ -28,8 +28,8 @@ def kill(proc_pid):
         proc.kill()
     process.kill()
     
-# def startDisplay(status, controlFile):
-def startDisplay(signageFile):
+def startDisplay(status, controlFile):
+# def startDisplay(signageFile):
         
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
@@ -37,8 +37,8 @@ def startDisplay(signageFile):
         os.remove('/tmp/controlFile.html')
         
     filename = wget.download(signageFile, out='/tmp/signageFile')
-    scriptfile = wget.download('https://pisignage.sagebrush.dev/pisignage_api/media/video.html', out='/tmp/controlFile.html')
-    # scriptfile = wget.download(controlFile, out='/tmp/controlFile.html')
+    # scriptfile = wget.download('https://pisignage.sagebrush.dev/pisignage_api/media/video.html', out='/tmp/controlFile.html')
+    scriptfile = wget.download(controlFile, out='/tmp/controlFile.html')
     
     print(filename)
     print(scriptfile)
@@ -86,8 +86,8 @@ async def main():
                     print("chrome was not running?")
                 #controlFile = response.json()['controlFile']
                 signageFile = response.json()['contentPath']
-                # chrome = startDisplay(status, controlFile)
-                chrome = startDisplay(signageFile)
+                chrome = startDisplay(status, controlFile)
+                # chrome = startDisplay(signageFile)
 
 
 
