@@ -98,8 +98,9 @@ async def main():
 
             with open(f'/tmp/{piName}.png', 'rb') as fp:
                 file_data = fp.read()
-            r = urllib3.request(
-                'POST',f'{BASE_URL}/UploadPiScreenshot',
+            r = urllib3.request.Request(
+                'POST',
+                f'{BASE_URL}/UploadPiScreenshot',
                 fields={'file': file_data, 'piName': piName}
             )
             print(r.json())
