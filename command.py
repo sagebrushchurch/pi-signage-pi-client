@@ -10,7 +10,7 @@ parser.add_argument("-p", "--screenshot",action="store_true", help="update scree
 parser.add_argument("--tvon",action="store_true", help="turn tv on")
 parser.add_argument("--tvoff",action="store_true", help="turn tv off")
 args = parser.parse_args()
-print(vars(args))
+config = vars(args)
 
-if vars['shutdown']:
+if config['shutdown']:
     print("shutting down")
