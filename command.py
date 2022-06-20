@@ -25,13 +25,14 @@ if config['content']:
     print("re-downloading content")
 
 if config['screenshot']:
-    piName = os.uname()[1]
-    os.environ['DISPLAY'] = ':0'
-    raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
-    
-    data = {'piName': piName}
-    files = {'file': open(f'/tmp/{piName}.png', 'rb')}
-    r = client.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
+    async with httpx.AsyncClient() as client:
+        piName = os.uname()[1]
+        os.environ['DISPLAY'] = ':0'
+        raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
+        
+        data = {'piName': piName}
+        files = {'file': open(f'/tmp/{piName}.png', 'rb')}
+        r = await client.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
 
 if config['tvon']:
     echo = subprocess.Popen(('echo', 'on','0'), stdout=subprocess.PIPE)
