@@ -78,6 +78,9 @@ async def main():
 
             if status == "Command":
                 print("do command things")
+                controlFile = response.json()['scriptPath']
+                signageFile = response.json()['contentPath']
+                print(signageFile, controlFile)
 
             elif status =="NoChange":
                 print("do nothing")
