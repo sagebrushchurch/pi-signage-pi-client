@@ -32,7 +32,7 @@ if config['screenshot']:
     r = client.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
 
 if config['tvon']:
-    echo = subprocess.Popen(('echo', '"on 0"'), stdout=subprocess.PIPE)
+    echo = subprocess.Popen(('echo', 'on','0'), stdout=subprocess.PIPE)
     cec = subprocess.check_output(('cec-client', '-s', '-d', '1'), stdin=echo.stdout)
     echo.wait()
 
