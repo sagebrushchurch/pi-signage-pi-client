@@ -36,6 +36,11 @@ if config['tvon']:
     cec = subprocess.check_output(('cec-client', '-s', '-d', '1'), stdin=echo.stdout)
     echo.wait()
 
+    echo = subprocess.Popen(('echo', 'as'), stdout=subprocess.PIPE)
+    cec = subprocess.check_output(('cec-client', '-s', '-d', '1'), stdin=echo.stdout)
+    echo.wait()
+
+
 
 if config['tvoff']:
     echo = subprocess.Popen(('echo', 'standby', '0'), stdout=subprocess.PIPE)
