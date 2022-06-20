@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 import argparse
 
 parser = argparse.ArgumentParser(description="Pi Signage Command Script",
