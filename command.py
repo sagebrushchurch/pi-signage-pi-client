@@ -7,17 +7,6 @@ import time
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
-async def screenshot():
-    async with httpx.AsyncClient() as client:
-        piName = os.uname()[1]
-        os.environ['DISPLAY'] = ':0'
-        raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
-        
-        data = {'piName': piName}
-        files = {'file': open(f'/tmp/{piName}.png', 'rb')}
-        r = await client.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
-    return 0
-
 parser = argparse.ArgumentParser(description="Pi Signage Command Script",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -36,7 +25,13 @@ if config['content']:
     print("re-downloading content")
 
 if config['screenshot']:
-   ss = screenshot()
+    piName = os.uname()[1]
+    os.environ['DISPLAY'] = ':0'
+    raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
+    
+    data = {'piName': piName}
+    files = {'file': open(f'/tmp/{piName}.png', 'rb')}
+    r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
 
 if config['tvon']:
     echo = subprocess.Popen(('echo', 'on','0'), stdout=subprocess.PIPE)
@@ -52,4 +47,3 @@ if config['tvoff']:
     echo = subprocess.Popen(('echo', 'standby', '0'), stdout=subprocess.PIPE)
     cec = subprocess.check_output(('cec-client', '-s', '-d', '1'), stdin=echo.stdout)
     echo.wait()
-
