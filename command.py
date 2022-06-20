@@ -16,6 +16,7 @@ async def screenshot():
         data = {'piName': piName}
         files = {'file': open(f'/tmp/{piName}.png', 'rb')}
         r = await client.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
+    return 0
 
 parser = argparse.ArgumentParser(description="Pi Signage Command Script",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -35,7 +36,7 @@ if config['content']:
     print("re-downloading content")
 
 if config['screenshot']:
-   screenshot()
+   ss = screenshot()
 
 if config['tvon']:
     echo = subprocess.Popen(('echo', 'on','0'), stdout=subprocess.PIPE)
