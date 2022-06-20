@@ -3,6 +3,7 @@ import argparse
 import os
 import httpx
 import subprocess
+import time
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
@@ -35,11 +36,10 @@ if config['tvon']:
     echo = subprocess.Popen(('echo', 'on','0'), stdout=subprocess.PIPE)
     cec = subprocess.check_output(('cec-client', '-s', '-d', '1'), stdin=echo.stdout)
     echo.wait()
-
+    time.sleep(10)
     echo = subprocess.Popen(('echo', 'as'), stdout=subprocess.PIPE)
     cec = subprocess.check_output(('cec-client', '-s', '-d', '1'), stdin=echo.stdout)
     echo.wait()
-
 
 
 if config['tvoff']:
