@@ -25,6 +25,7 @@ if config['content']:
     print("re-downloading content")
 
 if config['screenshot']:
+    piName = os.uname()[1]
     os.environ['DISPLAY'] = ':0'
     raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
     
