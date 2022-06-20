@@ -12,5 +12,5 @@ parser.add_argument("--tvoff",action="store_true", help="turn tv off")
 args = parser.parse_args()
 print(vars(args))
 
-if shutdown:
+if vars['shutdown']:
     print("shutting down")
