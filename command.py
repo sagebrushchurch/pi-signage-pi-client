@@ -1,5 +1,9 @@
 #!/usr/bin/python
 import argparse
+import os
+import httpx
+
+BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
 parser = argparse.ArgumentParser(description="Pi Signage Command Script",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -13,13 +17,18 @@ args = parser.parse_args()
 config = vars(args)
 
 if config['restart']:
-    print("restarting")
+    os.system("sudo reboot")
 
 if config['content']:
     print("re-downloading content")
 
 if config['screenshot']:
-    print("re-uploading screenshot")
+    os.environ['DISPLAY'] = ':0'
+    raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
+    
+    data = {'piName': piName}
+    files = {'file': open(f'/tmp/{piName}.png', 'rb')}
+    r = await client.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
 
 if config['tvon']:
     print("trying to turn tv on")
