@@ -2,6 +2,7 @@
 import argparse
 import os
 import httpx
+import subprocess
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
@@ -31,7 +32,10 @@ if config['screenshot']:
     r = await client.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
 
 if config['tvon']:
-    print("trying to turn tv on")
+    echo = subprocess.Popen(('echo', '"on 0"'), stdout=subprocess.PIPE)
+    cec = subprocess.check_output(('cec-client', '-s', '-d', '1'), stdin=echo.stdout)
+
 
 if config['tvoff']:
-    print("trying to turn tv off")
+    echo = subprocess.Popen(('echo', '"standby 0"'), stdout=subprocess.PIPE)
+    cec = subprocess.check_output(('cec-client', '-s', '-d', '1'), stdin=echo.stdout)
