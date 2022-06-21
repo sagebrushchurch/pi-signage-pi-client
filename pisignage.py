@@ -103,7 +103,7 @@ async def main():
             r = await client.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
             print(r)
 
-
+            print("sleeping")
             time.sleep(60)
 
 asyncio.run(main())
