@@ -83,7 +83,7 @@ async def main():
                 print(signageFile, controlFile)
 
             elif status =="NoChange":
-                print("do nothing")
+                print("I am sentient!")
             
             else:
                 try:
