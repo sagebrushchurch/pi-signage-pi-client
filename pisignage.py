@@ -104,6 +104,6 @@ async def main():
             print(r)
 
 
-            input("Press any key")
+            time.sleep(60)
 
 asyncio.run(main())
