@@ -28,7 +28,6 @@ if config['UploadScreenshot']:
     data = {'piName': piName}
     files = {'file': open(f'/tmp/{piName}.png', 'rb')}
     r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
-    print(r)
 
 if config['TurnOnTV']:
     echo = subprocess.Popen(('echo', 'on','0'), stdout=subprocess.PIPE)
