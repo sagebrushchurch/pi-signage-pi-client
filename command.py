@@ -10,21 +10,17 @@ BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 parser = argparse.ArgumentParser(description="Pi Signage Command Script",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument("-r", "--restart", action="store_true", help="reboot")
-parser.add_argument("-c", "--content", action="store_true", help="re-download content")
-parser.add_argument("-p", "--screenshot",action="store_true", help="update screenshot")
-parser.add_argument("--tvon",action="store_true", help="turn tv on")
-parser.add_argument("--tvoff",action="store_true", help="turn tv off")
+parser.add_argument("-r", "--Restart", action="store_true", help="reboots the pi")
+parser.add_argument("-p", "--UploadScreenshot",action="store_true", help="update screenshot")
+parser.add_argument("--TurnOnTV",action="store_true", help="turn tv on")
+parser.add_argument("--TurnOffTV",action="store_true", help="turn tv off")
 args = parser.parse_args()
 config = vars(args)
 
-if config['restart']:
+if config['Restart']:
     os.system("sudo reboot")
 
-if config['content']:
-    print("re-downloading content")
-
-if config['screenshot']:
+if config['UploadScreenshot']:
     piName = os.uname()[1]
     os.environ['DISPLAY'] = ':0'
     raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
@@ -34,7 +30,7 @@ if config['screenshot']:
     r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
     print(r)
 
-if config['tvon']:
+if config['TurnOnTV']:
     echo = subprocess.Popen(('echo', 'on','0'), stdout=subprocess.PIPE)
     cec = subprocess.check_output(('cec-client', '-s', '-d', '1'), stdin=echo.stdout)
     echo.wait()
@@ -43,8 +39,7 @@ if config['tvon']:
     cec = subprocess.check_output(('cec-client', '-s', '-d', '1'), stdin=echo.stdout)
     echo.wait()
 
-
-if config['tvoff']:
+if config['TurnOffTV']:
     echo = subprocess.Popen(('echo', 'standby', '0'), stdout=subprocess.PIPE)
     cec = subprocess.check_output(('cec-client', '-s', '-d', '1'), stdin=echo.stdout)
     echo.wait()
