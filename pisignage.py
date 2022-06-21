@@ -101,7 +101,6 @@ async def main():
             data = {'piName': piName}
             files = {'file': open(f'/tmp/{piName}.png', 'rb')}
             r = await client.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
-            print(r)
 
             await client.aclose()
             print("sleeping...")
