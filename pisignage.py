@@ -28,7 +28,7 @@ def kill(proc_pid):
         proc.kill()
     process.kill()
 
-def startDisplay(status, controlFile, signageFile):
+def startDisplay(controlFile, signageFile):
 # def startDisplay(signageFile):
 
     if os.path.exists('/tmp/signageFile'):
@@ -38,19 +38,32 @@ def startDisplay(status, controlFile, signageFile):
 
     filename = wget.download(signageFile, out='/tmp/signageFile')
     # scriptfile = wget.download('https://pisignage.sagebrush.dev/pisignage_api/media/video.html', out='/tmp/controlFile.html')
-    try:
-        scriptfile = wget.download(controlFile, out='/tmp/controlFile.html')
-        print(scriptfile)
-        print(filename)
-        chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/controlFile.html"])
-    except ValueError:
-        chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/signageFile"])
-        print(filename)
-        
+    scriptfile = wget.download(controlFile, out='/tmp/controlFile.html')
+
+    print(filename)
+    print(scriptfile)
 
     os.environ['DISPLAY'] = ':0'
 
-    
+    chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/controlFile.html"])
+
+    return chrome
+
+def startWebDisplay(signageFile):
+    # def startDisplay(signageFile):
+
+    if os.path.exists('/tmp/signageFile'):
+        os.remove('/tmp/signageFile')
+    if os.path.exists('/tmp/controlFile.html'):
+        os.remove('/tmp/controlFile.html')
+
+    filename = wget.download(signageFile, out='/tmp/signageFile')
+
+    print(filename)
+
+    os.environ['DISPLAY'] = ':0'
+
+    chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/signageFile"])
 
     return chrome
 
@@ -94,8 +107,12 @@ def main():
                 except UnboundLocalError:
                     print("chrome was not running?")
                 controlFile = response.json()['scriptPath']
+                print(controlFile)
                 signageFile = response.json()['contentPath']
-                chrome = startDisplay(status, controlFile, signageFile)
+                if controlFile == '':
+                    chrome = startWebDisplay(signageFile)
+                else:
+                    chrome = startDisplay(controlFile, signageFile)
                 # chrome = startDisplay(signageFile)
 
             os.environ['DISPLAY'] = ':0'
