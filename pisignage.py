@@ -115,7 +115,7 @@ def main():
                         tv.standby()
                         tvStatus = False
                 else:
-                    if tvStatus:
+                    if not tvStatus:
                         print("turning tv on")
                         tv.power_on()
                         tvStatus = True
