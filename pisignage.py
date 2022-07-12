@@ -102,7 +102,7 @@ def main():
 
             print("sleeping...")
             time.sleep(30)
-        except json.decoder.JSONDecodeError:
+        except KeyError:
             print("waiting cuz broken")
             time.sleep(60)
 
