@@ -144,7 +144,7 @@ def main():
             time.sleep(30)
         except Exception as e:
             print(e)
-            print("waiting due to server broken")
+            print("Caught a error...waiting and will try again")
             time.sleep(60)
 
 if __name__ == "__main__":
