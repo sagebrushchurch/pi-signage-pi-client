@@ -1,7 +1,6 @@
 import httpx
 import json
 import os
-import asyncio
 import wget
 import hashlib
 import subprocess
@@ -104,4 +103,5 @@ def main():
         print("sleeping...")
         time.sleep(30)
 
-asyncio.run(main())
+if __name__ == "__main__":
+    main()
