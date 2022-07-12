@@ -24,7 +24,7 @@ def md5checksum(fname):
 
 def kill(proc_pid):
     process = psutil.Process(proc_pid)
-    for proc in process.children(recursive=True):
+    for proc in process.children(recursive=True):""
         proc.kill()
     process.kill()
 
@@ -102,7 +102,8 @@ def main():
 
             print("sleeping...")
             time.sleep(30)
-        except:
+        except Exception as e:
+            print(e)
             print("waiting due to server broken")
             time.sleep(60)
 
