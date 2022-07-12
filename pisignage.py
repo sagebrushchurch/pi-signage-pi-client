@@ -107,6 +107,7 @@ def main():
 
             elif status =="NoChange":
                 print("I am sentient!")
+                print(tv.is_on())
 
             else:
                 if status == "DEFAULT":
