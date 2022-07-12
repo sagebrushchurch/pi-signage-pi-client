@@ -40,10 +40,10 @@ def startDisplay(status, controlFile, signageFile):
     # scriptfile = wget.download('https://pisignage.sagebrush.dev/pisignage_api/media/video.html', out='/tmp/controlFile.html')
     try:
         scriptfile = wget.download(controlFile, out='/tmp/controlFile.html')
+        print(scriptfile)
     except ValueError:
         pass
     print(filename)
-    print(scriptfile)
 
     os.environ['DISPLAY'] = ':0'
 
