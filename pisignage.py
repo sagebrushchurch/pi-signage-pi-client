@@ -111,10 +111,12 @@ def main():
             else:
                 if status == "DEFAULT":
                     if tvStatus:
+                        print("turning tv off")
                         tv.standby()
                         tvStatus = False
                 else:
                     if tvStatus:
+                        print("turning tv on")
                         tv.power_on()
                         tvStatus = True
                 clearFiles()
