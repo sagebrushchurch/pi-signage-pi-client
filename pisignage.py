@@ -109,7 +109,6 @@ def main():
                 if chromePID:
                     kill(chromePID.pid)
                 controlFile = response.json()['scriptPath']
-                print(controlFile)
                 signageFile = response.json()['contentPath']
                 if controlFile == '':
                     chromePID = startWebDisplay(signageFile)
