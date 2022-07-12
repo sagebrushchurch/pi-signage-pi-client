@@ -66,7 +66,7 @@ def main():
         params["name"] = piName
         params["hash"] = hash
 
-        response = httpx.post(f'{BASE_URL}/piConnect', json=params)
+        response = httpx.post(f'{BASE_URL}/piConnect', json=params, timeout=None)
         print(response)
         print(response.json())
         status = response.json()['status']
@@ -96,7 +96,7 @@ def main():
         
         data = {'piName': piName}
         files = {'file': open(f'/tmp/{piName}.png', 'rb')}
-        r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
+        r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files, timeout=None)
 
         print("sleeping...")
         time.sleep(30)
