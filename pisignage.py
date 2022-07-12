@@ -104,7 +104,7 @@ def main():
             print("sleeping...")
             time.sleep(30)
         except KeyError:
-            print("waiting cuz broken")
+            print("waiting due to server broken")
             time.sleep(60)
 
 if __name__ == "__main__":
