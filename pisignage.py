@@ -38,8 +38,10 @@ def startDisplay(status, controlFile, signageFile):
 
     filename = wget.download(signageFile, out='/tmp/signageFile')
     # scriptfile = wget.download('https://pisignage.sagebrush.dev/pisignage_api/media/video.html', out='/tmp/controlFile.html')
-    scriptfile = wget.download(controlFile, out='/tmp/controlFile.html')
-
+    try:
+        scriptfile = wget.download(controlFile, out='/tmp/controlFile.html')
+    except ValueError:
+        pass
     print(filename)
     print(scriptfile)
 
