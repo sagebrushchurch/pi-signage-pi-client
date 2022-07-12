@@ -55,7 +55,7 @@ def main():
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
 
-    while():
+    while(True):
         try:
             hash = md5checksum('/tmp/signageFile')
         except FileNotFoundError:
