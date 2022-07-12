@@ -107,7 +107,7 @@ def main():
 
             elif status =="NoChange":
                 print("I am sentient!")
-                print(tv.is_on())
+                # print(tv.is_on())
 
             else:
                 if status == "DEFAULT":
@@ -115,13 +115,13 @@ def main():
                         print("turning tv off")
                         tv.standby()
                         tvStatus = False
-                        print(tv.is_on())
+                        # print(tv.is_on())
                 else:
                     if not tvStatus:
                         print("turning tv on")
                         tv.power_on()
                         tvStatus = True
-                        print(tv.is_on())
+                        # print(tv.is_on())
                 clearFiles()
                 if chromePID:
                     kill(chromePID.pid)
