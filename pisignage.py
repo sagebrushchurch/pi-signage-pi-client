@@ -61,9 +61,9 @@ def startWebDisplay(signageFile):
 
     os.environ['DISPLAY'] = ':0'
 
-    chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/webPage.html"])
+    chrome2 = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/webPage.html"])
 
-    return chrome
+    return chrome2
 
 
 def main():
@@ -74,6 +74,8 @@ def main():
         os.remove('/tmp/webPage.html')
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
+        
+    chromePID = None
 
     while True:
         try:
@@ -105,16 +107,16 @@ def main():
 
             else:
                 try:
-                    kill(chrome.pid)
+                    kill(chromePID.pid)
                 except UnboundLocalError:
                     print("chrome was not running?")
                 controlFile = response.json()['scriptPath']
                 print(controlFile)
                 signageFile = response.json()['contentPath']
                 if controlFile == '':
-                    chrome = startWebDisplay(signageFile)
+                    chromePID = startWebDisplay(signageFile)
                 else:
-                    chrome = startDisplay(controlFile, signageFile)
+                    chromePID = startDisplay(controlFile, signageFile)
                 # chrome = startDisplay(signageFile)
 
             os.environ['DISPLAY'] = ':0'
