@@ -78,9 +78,14 @@ def main():
     chromePID = None
 
     while True:
-        try:
+        if os.path.exists('/tmp/signageFile')
             hash = md5checksum('/tmp/signageFile')
-        except FileNotFoundError:
+        else:
+            hash = 0
+            
+        if os.path.exists('/tmp/webPage.html')
+            hash = md5checksum('/tmp/webPage.html')
+        else:
             hash = 0
 
         print(f"Pi Hash: {hash}")
