@@ -66,40 +66,44 @@ def main():
         params["name"] = piName
         params["hash"] = hash
 
-        response = httpx.post(f'{BASE_URL}/piConnect', json=params, timeout=None)
-        print(response)
-        print(response.json())
-        status = response.json()['status']
-        print(f"Status: {status}")
+        try:
+            response = httpx.post(f'{BASE_URL}/piConnect', json=params, timeout=None)
+            print(response)
+            print(response.json())
+            status = response.json()['status']
+            print(f"Status: {status}")
 
-        if status == "Command":
-            print("do command things")
-            controlFile = response.json()['scriptPath']
-            signageFile = response.json()['contentPath']
-            print(signageFile, controlFile)
+            if status == "Command":
+                print("do command things")
+                controlFile = response.json()['scriptPath']
+                signageFile = response.json()['contentPath']
+                print(signageFile, controlFile)
 
-        elif status =="NoChange":
-            print("I am sentient!")
-        
-        else:
-            try:
-                kill(chrome.pid)
-            except:
-                print("chrome was not running?")
-            controlFile = response.json()['scriptPath']
-            signageFile = response.json()['contentPath']
-            chrome = startDisplay(status, controlFile, signageFile)
-            # chrome = startDisplay(signageFile)
+            elif status =="NoChange":
+                print("I am sentient!")
+            
+            else:
+                try:
+                    kill(chrome.pid)
+                except:
+                    print("chrome was not running?")
+                controlFile = response.json()['scriptPath']
+                signageFile = response.json()['contentPath']
+                chrome = startDisplay(status, controlFile, signageFile)
+                # chrome = startDisplay(signageFile)
 
-        os.environ['DISPLAY'] = ':0'
-        raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
-        
-        data = {'piName': piName}
-        files = {'file': open(f'/tmp/{piName}.png', 'rb')}
-        r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files, timeout=None)
+            os.environ['DISPLAY'] = ':0'
+            raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
+            
+            data = {'piName': piName}
+            files = {'file': open(f'/tmp/{piName}.png', 'rb')}
+            r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files, timeout=None)
 
-        print("sleeping...")
-        time.sleep(30)
+            print("sleeping...")
+            time.sleep(30)
+        except JSONDecodeError:
+            print("waiting cuz broken")
+            time.sleep(60)
 
 if __name__ == "__main__":
     main()
