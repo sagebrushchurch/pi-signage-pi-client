@@ -52,58 +52,56 @@ def startDisplay(status, controlFile, signageFile):
     return chrome
 
 
-async def main():
+def main():
     
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
         
     while(True):
-        async with httpx.AsyncClient() as client:
+        try:
+            hash = md5checksum('/tmp/signageFile')
+        except:
+            hash = 0
+            
+        print(f"Pi Hash: {hash}")
+        params = {}
+        piName = os.uname()[1]
+        params["name"] = piName
+        params["hash"] = hash
+
+        response = httpx.post(f'{BASE_URL}/piConnect', json=params)
+        print(response)
+        print(response.json())
+        status = response.json()['status']
+        print(f"Status: {status}")
+
+        if status == "Command":
+            print("do command things")
+            controlFile = response.json()['scriptPath']
+            signageFile = response.json()['contentPath']
+            print(signageFile, controlFile)
+
+        elif status =="NoChange":
+            print("I am sentient!")
+        
+        else:
             try:
-                hash = md5checksum('/tmp/signageFile')
+                kill(chrome.pid)
             except:
-                hash = 0
-                
-            print(f"Pi Hash: {hash}")
-            params = {}
-            piName = os.uname()[1]
-            params["name"] = piName
-            params["hash"] = hash
+                print("chrome was not running?")
+            controlFile = response.json()['scriptPath']
+            signageFile = response.json()['contentPath']
+            chrome = startDisplay(status, controlFile, signageFile)
+            # chrome = startDisplay(signageFile)
 
-            response = await client.post(f'{BASE_URL}/piConnect', json=params)
-            print(response)
-            print(response.json())
-            status = response.json()['status']
-            print(f"Status: {status}")
+        os.environ['DISPLAY'] = ':0'
+        raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
+        
+        data = {'piName': piName}
+        files = {'file': open(f'/tmp/{piName}.png', 'rb')}
+        r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
 
-            if status == "Command":
-                print("do command things")
-                controlFile = response.json()['scriptPath']
-                signageFile = response.json()['contentPath']
-                print(signageFile, controlFile)
-
-            elif status =="NoChange":
-                print("I am sentient!")
-            
-            else:
-                try:
-                    kill(chrome.pid)
-                except:
-                    print("chrome was not running?")
-                controlFile = response.json()['scriptPath']
-                signageFile = response.json()['contentPath']
-                chrome = startDisplay(status, controlFile, signageFile)
-                # chrome = startDisplay(signageFile)
-
-            os.environ['DISPLAY'] = ':0'
-            raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
-            
-            data = {'piName': piName}
-            files = {'file': open(f'/tmp/{piName}.png', 'rb')}
-            r = await client.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files)
-
-            await client.aclose()
-            print("sleeping...")
-            time.sleep(30)
+        print("sleeping...")
+        time.sleep(30)
 
 asyncio.run(main())
