@@ -103,7 +103,7 @@ def main():
 
             print("sleeping...")
             time.sleep(30)
-        except:
+        except KeyError:
             print("waiting due to server broken")
             time.sleep(60)
 
