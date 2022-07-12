@@ -106,10 +106,8 @@ def main():
                 print("I am sentient!")
 
             else:
-                try:
+                if chromePID:
                     kill(chromePID.pid)
-                except UnboundLocalError:
-                    print("chrome was not running?")
                 controlFile = response.json()['scriptPath']
                 print(controlFile)
                 signageFile = response.json()['contentPath']
