@@ -78,12 +78,12 @@ def main():
     chromePID = None
 
     while True:
-        if os.path.exists('/tmp/signageFile')
+        if os.path.exists('/tmp/signageFile'):
             hash = md5checksum('/tmp/signageFile')
         else:
             hash = 0
             
-        if os.path.exists('/tmp/webPage.html')
+        if os.path.exists('/tmp/webPage.html'):
             hash = md5checksum('/tmp/webPage.html')
         else:
             hash = 0
@@ -111,6 +111,12 @@ def main():
                 print("I am sentient!")
 
             else:
+                if os.path.exists('/tmp/signageFile'):
+                    os.remove('/tmp/signageFile')
+                if os.path.exists('/tmp/webPage.html'):
+                    os.remove('/tmp/webPage.html')
+                if os.path.exists('/tmp/controlFile.html'):
+                    os.remove('/tmp/controlFile.html')
                 if chromePID:
                     kill(chromePID.pid)
                 controlFile = response.json()['scriptPath']
