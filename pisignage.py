@@ -6,6 +6,7 @@ import subprocess
 import time
 import psutil
 import json
+import cec
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
@@ -71,9 +72,11 @@ def startWebDisplay(signageFile):
 
 def main():
 
-
+    cec.init()
+    tv = cec.Device(cec.CECDEVICE_TV)
     clearFiles()
     chromePID = None
+    tvStatus = False
 
     while True:
         if os.path.exists('/tmp/signageFile'):
@@ -106,6 +109,14 @@ def main():
                 print("I am sentient!")
 
             else:
+                if status == "DEFAULT":
+                    if tvStatus:
+                        tv.standby()
+                        tvStatus = False
+                else:
+                    if tvStatus:
+                        tv.power_on()
+                        tvStatus = True
                 clearFiles()
                 if chromePID:
                     kill(chromePID.pid)
