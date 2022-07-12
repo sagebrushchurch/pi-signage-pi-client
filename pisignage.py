@@ -56,6 +56,7 @@ def main():
         os.remove('/tmp/signageFile')
         
     while(True):
+        hash = md5checksum('/tmp/signageFile')
         try:
             hash = md5checksum('/tmp/signageFile')
         except:
