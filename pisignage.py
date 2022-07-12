@@ -7,7 +7,7 @@ import time
 import psutil
 import json
 
-BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api1'
+BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
 
 def md5checksum(fname):
@@ -56,10 +56,9 @@ def main():
         os.remove('/tmp/signageFile')
         
     while(True):
-        hash = md5checksum('/tmp/signageFile')
         try:
             hash = md5checksum('/tmp/signageFile')
-        except:
+        except FileNotFoundError:
             hash = 0
             
         print(f"Pi Hash: {hash}")
@@ -85,6 +84,7 @@ def main():
                 print("I am sentient!")
             
             else:
+                kill(chrome.pid)
                 try:
                     kill(chrome.pid)
                 except:
