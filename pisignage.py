@@ -1,11 +1,9 @@
 import httpx
-import json
 import os
 import wget
 import hashlib
 import subprocess
 import time
-import signal
 import psutil
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
