@@ -5,6 +5,7 @@ import hashlib
 import subprocess
 import time
 import psutil
+import json
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api1'
 
@@ -101,7 +102,7 @@ def main():
 
             print("sleeping...")
             time.sleep(30)
-        except JSONDecodeError:
+        except json.decoder.JSONDecodeError:
             print("waiting cuz broken")
             time.sleep(60)
 
