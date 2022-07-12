@@ -41,13 +41,16 @@ def startDisplay(status, controlFile, signageFile):
     try:
         scriptfile = wget.download(controlFile, out='/tmp/controlFile.html')
         print(scriptfile)
+        print(filename)
+        chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/controlFile.html"])
     except ValueError:
-        pass
-    print(filename)
+        chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/signageFile"])
+        print(filename)
+        
 
     os.environ['DISPLAY'] = ':0'
 
-    chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/controlFile.html"])
+    
 
     return chrome
 
