@@ -80,10 +80,7 @@ def main():
     while True:
         if os.path.exists('/tmp/signageFile'):
             hash = md5checksum('/tmp/signageFile')
-        else:
-            hash = 0
-            
-        if os.path.exists('/tmp/webPage.html'):
+        elif os.path.exists('/tmp/webPage.html'):
             hash = md5checksum('/tmp/webPage.html')
         else:
             hash = 0
