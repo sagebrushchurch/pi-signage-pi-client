@@ -9,7 +9,14 @@ import json
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
-
+def clearFiles():
+    if os.path.exists('/tmp/signageFile'):
+        os.remove('/tmp/signageFile')
+    if os.path.exists('/tmp/webPage.html'):
+        os.remove('/tmp/webPage.html')
+    if os.path.exists('/tmp/controlFile.html'):
+        os.remove('/tmp/controlFile.html')
+        
 def md5checksum(fname):
 
     md5 = hashlib.md5()
@@ -31,10 +38,7 @@ def kill(proc_pid):
 def startDisplay(controlFile, signageFile):
 # def startDisplay(signageFile):
 
-    if os.path.exists('/tmp/signageFile'):
-        os.remove('/tmp/signageFile')
-    if os.path.exists('/tmp/controlFile.html'):
-        os.remove('/tmp/controlFile.html')
+    clearFiles()
 
     filename = wget.download(signageFile, out='/tmp/signageFile')
     # scriptfile = wget.download('https://pisignage.sagebrush.dev/pisignage_api/media/video.html', out='/tmp/controlFile.html')
@@ -52,8 +56,7 @@ def startDisplay(controlFile, signageFile):
 def startWebDisplay(signageFile):
     # def startDisplay(signageFile):
 
-    if os.path.exists('/tmp/webPage.html'):
-        os.remove('/tmp/webPage.html')
+    clearFiles()
 
     filename = wget.download(signageFile, out='/tmp/webPage.html')
 
@@ -68,13 +71,8 @@ def startWebDisplay(signageFile):
 
 def main():
 
-    if os.path.exists('/tmp/signageFile'):
-        os.remove('/tmp/signageFile')
-    if os.path.exists('/tmp/webPage.html'):
-        os.remove('/tmp/webPage.html')
-    if os.path.exists('/tmp/controlFile.html'):
-        os.remove('/tmp/controlFile.html')
-        
+
+    clearFiles()
     chromePID = None
 
     while True:
@@ -108,12 +106,7 @@ def main():
                 print("I am sentient!")
 
             else:
-                if os.path.exists('/tmp/signageFile'):
-                    os.remove('/tmp/signageFile')
-                if os.path.exists('/tmp/webPage.html'):
-                    os.remove('/tmp/webPage.html')
-                if os.path.exists('/tmp/controlFile.html'):
-                    os.remove('/tmp/controlFile.html')
+                clearFiles()
                 if chromePID:
                     kill(chromePID.pid)
                 controlFile = response.json()['scriptPath']
