@@ -51,11 +51,11 @@ def startDisplay(status, controlFile, signageFile):
 
 
 def main():
-    
+
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
 
-    while(True):
+    while():
         try:
             hash = md5checksum('/tmp/signageFile')
         except FileNotFoundError:
