@@ -84,7 +84,6 @@ def main():
                 print("I am sentient!")
 
             else:
-                kill(chrome.pid)
                 try:
                     kill(chrome.pid)
                 except UnboundLocalError:
