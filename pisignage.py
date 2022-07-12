@@ -52,18 +52,16 @@ def startDisplay(controlFile, signageFile):
 def startWebDisplay(signageFile):
     # def startDisplay(signageFile):
 
-    if os.path.exists('/tmp/signageFile'):
-        os.remove('/tmp/signageFile')
-    if os.path.exists('/tmp/controlFile.html'):
-        os.remove('/tmp/controlFile.html')
+    if os.path.exists('/tmp/webPage.html'):
+        os.remove('/tmp/webPage.html')
 
-    filename = wget.download(signageFile, out='/tmp/signageFile')
+    filename = wget.download(signageFile, out='/tmp/webPage.html')
 
     print(filename)
 
     os.environ['DISPLAY'] = ':0'
 
-    chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/signageFile"])
+    chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/webPage.html"])
 
     return chrome
 
@@ -72,6 +70,10 @@ def main():
 
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
+    if os.path.exists('/tmp/webPage.html'):
+        os.remove('/tmp/webPage.html')
+    if os.path.exists('/tmp/controlFile.html'):
+        os.remove('/tmp/controlFile.html')
 
     while True:
         try:
