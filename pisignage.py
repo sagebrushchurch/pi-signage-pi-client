@@ -27,26 +27,26 @@ def kill(proc_pid):
     for proc in process.children(recursive=True):
         proc.kill()
     process.kill()
-    
+
 def startDisplay(status, controlFile, signageFile):
 # def startDisplay(signageFile):
-        
+
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
-        
+
     filename = wget.download(signageFile, out='/tmp/signageFile')
     # scriptfile = wget.download('https://pisignage.sagebrush.dev/pisignage_api/media/video.html', out='/tmp/controlFile.html')
     scriptfile = wget.download(controlFile, out='/tmp/controlFile.html')
-    
+
     print(filename)
     print(scriptfile)
-    
+
     os.environ['DISPLAY'] = ':0'
-    
+
     chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/controlFile.html"])
-    
+
     return chrome
 
 
@@ -54,13 +54,13 @@ def main():
     
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
-        
+
     while(True):
         try:
             hash = md5checksum('/tmp/signageFile')
         except FileNotFoundError:
             hash = 0
-            
+
         print(f"Pi Hash: {hash}")
         params = {}
         piName = os.uname()[1]
@@ -82,7 +82,7 @@ def main():
 
             elif status =="NoChange":
                 print("I am sentient!")
-            
+
             else:
                 kill(chrome.pid)
                 try:
@@ -96,7 +96,7 @@ def main():
 
             os.environ['DISPLAY'] = ':0'
             subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"], check=True)
-            
+
             data = {'piName': piName}
             files = {'file': open(f'/tmp/{piName}.png', 'rb')}
             r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files, timeout=None)
