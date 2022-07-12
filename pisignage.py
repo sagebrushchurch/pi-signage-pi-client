@@ -87,7 +87,7 @@ def main():
                 kill(chrome.pid)
                 try:
                     kill(chrome.pid)
-                except:
+                except UnboundLocalError:
                     print("chrome was not running?")
                 controlFile = response.json()['scriptPath']
                 signageFile = response.json()['contentPath']
@@ -95,7 +95,7 @@ def main():
                 # chrome = startDisplay(signageFile)
 
             os.environ['DISPLAY'] = ':0'
-            raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
+            subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"], check=True)
             
             data = {'piName': piName}
             files = {'file': open(f'/tmp/{piName}.png', 'rb')}
@@ -103,7 +103,7 @@ def main():
 
             print("sleeping...")
             time.sleep(30)
-        except KeyError:
+        except:
             print("waiting due to server broken")
             time.sleep(60)
 
