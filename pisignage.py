@@ -6,7 +6,7 @@ import subprocess
 import time
 import psutil
 
-BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
+BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api1'
 
 
 def md5checksum(fname):
