@@ -24,7 +24,7 @@ def md5checksum(fname):
 
 def kill(proc_pid):
     process = psutil.Process(proc_pid)
-    for proc in process.children(recursive=True):""
+    for proc in process.children(recursive=True):
         proc.kill()
     process.kill()
 
