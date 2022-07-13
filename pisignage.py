@@ -1,4 +1,5 @@
-from traceback import print_exc
+from cmath import log
+from traceback import recentLogs_exc
 import os
 import hashlib
 import subprocess
@@ -11,6 +12,7 @@ import cec
 
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
+logList = []
 
 def clearFiles():
     if os.path.exists('/tmp/signageFile'):
@@ -42,8 +44,8 @@ def startDisplay(controlFile, signageFile):
 
     clearFiles()
 
-    filename = wget.download(signageFile, out='/tmp/signageFile')
-    scriptfile = wget.download(controlFile, out='/tmp/controlFile.html')
+    wget.download(signageFile, out='/tmp/signageFile')
+    wget.download(controlFile, out='/tmp/controlFile.html')
 
     os.environ['DISPLAY'] = ':0'
 
@@ -58,7 +60,7 @@ def startWebDisplay(signageFile):
 
     clearFiles()
 
-    filename = wget.download(signageFile, out='/tmp/webPage.html')
+    wget.download(signageFile, out='/tmp/webPage.html')
 
     os.environ['DISPLAY'] = ':0'
 
@@ -68,6 +70,13 @@ def startWebDisplay(signageFile):
                                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     return chrome2
+
+def recentLogs(logMessage: str):
+
+    logList.append(logMessage)
+    
+    recentLogs(logMessage)
+    return logList
 
 
 def main():
@@ -80,7 +89,7 @@ def main():
     tvStatus = "False"
 
     while True:
-        print(tvStatus)
+        recentLogs(tvStatus)
         if os.path.exists('/tmp/signageFile'):
             hash = md5checksum('/tmp/signageFile')
         elif os.path.exists('/tmp/webPage.html'):
@@ -97,21 +106,24 @@ def main():
         try:
             response = httpx.post(f'{BASE_URL}/piConnect', json=params, timeout=None)
             status = response.json()['status']
-            print(f"Status: {status}")
+            recentLogs(f"Status: {status}")
 
             if status == "Command":
-                print("do command things")
+                recentLogs("do command things")
                 commandFile = response.json()['scriptPath']
                 commandFlags = response.json()['contentPath']
                 wget.download(commandFile, out='/tmp/commandfile.py')
                 try:
                     subprocess.Popen(["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
                 except subprocess.CalledProcessError as e:
-                    print(e, "probably unsupported TV")
-                print(commandFlags, commandFile)
+                    recentLogs(e)
+                    recentLogs("probably unsupported TV")
+                    
+                recentLogs(commandFlags)
+                recentLogs(commandFile)
 
             elif status =="NoChange":
-                print("I am sentient!")
+                recentLogs("I am sentient!")
                 try:
                     tvStatus = str(tv.is_on())
                 except OSError:
@@ -120,7 +132,7 @@ def main():
             else:
                 if status == "DEFAULT":
                     if tvStatusFlag:
-                        print("turning tv off")
+                        recentLogs("turning tv off")
                         tv.standby()
                         tvStatusFlag = False
                         try:
@@ -129,7 +141,7 @@ def main():
                             tvStatus = "UnsupportedTV"
                 else:
                     if not tvStatusFlag:
-                        print("turning tv on")
+                        recentLogs("turning tv on")
                         tv.power_on()
                         tvStatusFlag = True
                         try:
@@ -154,15 +166,16 @@ def main():
             files = {'file': open(f'/tmp/{piName}-thumb.png', 'rb')}
             r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files, timeout=None)
 
-            print("I sleep...")
+            recentLogs("I sleep...")
             time.sleep(30)
         except psutil.NoSuchProcess:
+        # Sometimes chrome's pid changes, i think its cuz of the redirect for webpage viewing
             time.sleep(1)
-            print("chrome pid lost, restarting")
+            recentLogs("chrome pid lost, restarting")
         except Exception as e:
-            print ('type is:', e.__class__.__name__)
-            print_exc()
-            print("Caught a error...waiting and will try again")
+        # Keeping general exception so that loop never crashes out
+            recentLogs('type is: ' + e.__class__.__name__)
+            recentLogs("Caught a error...waiting and will try again")
             time.sleep(15)
 
 if __name__ == "__main__":
