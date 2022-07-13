@@ -103,9 +103,11 @@ def main():
 
             if status == "Command":
                 print("do command things")
-                controlFile = response.json()['scriptPath']
-                signageFile = response.json()['contentPath']
-                print(signageFile, controlFile)
+                commandFile = response.json()['scriptPath']
+                commandFlags = response.json()['contentPath']
+                wget.download(commandFile, out='/tmp/commandfile.py')
+                subprocess.Popen(["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
+                print(commandFlags, commandFile)
 
             elif status =="NoChange":
                 print("I am sentient!")

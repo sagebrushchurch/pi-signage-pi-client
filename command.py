@@ -1,9 +1,10 @@
 #!/usr/bin/python
 import argparse
 import os
-import httpx
 import subprocess
 import time
+import httpx
+
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
@@ -23,7 +24,7 @@ if config['Restart']:
 if config['UploadScreenshot']:
     piName = os.uname()[1]
     os.environ['DISPLAY'] = ':0'
-    raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"])
+    raspi2png = subprocess.run(["scrot", "-o", "-z", f"/tmp/{piName}.png"], check=True)
     
     data = {'piName': piName}
     files = {'file': open(f'/tmp/{piName}.png', 'rb')}
