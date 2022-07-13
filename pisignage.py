@@ -97,8 +97,6 @@ def main():
 
         try:
             response = httpx.post(f'{BASE_URL}/piConnect', json=params, timeout=None)
-            print(response)
-            print(response.json())
             status = response.json()['status']
             print(f"Status: {status}")
 
