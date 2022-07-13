@@ -75,7 +75,7 @@ def recentLogs(logMessage: str):
 
     logList.append(logMessage)
     
-    recentLogs(logMessage)
+    print(logMessage)
     return logList
 
 
