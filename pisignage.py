@@ -155,7 +155,7 @@ def main():
             files = {'file': open(f'/tmp/{piName}.png', 'rb')}
             r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files, timeout=None)
 
-            print("sleeping...")
+            print("I sleep...")
             time.sleep(30)
         except Exception as e:
             print ('type is:', e.__class__.__name__)
