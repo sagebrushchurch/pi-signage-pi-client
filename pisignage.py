@@ -79,6 +79,7 @@ def main():
     tvStatus = False
 
     while True:
+        print(tvStatus)
         if os.path.exists('/tmp/signageFile'):
             hash = md5checksum('/tmp/signageFile')
         elif os.path.exists('/tmp/webPage.html'):
@@ -139,8 +140,10 @@ def main():
                 signageFile = response.json()['contentPath']
                 if controlFile == '':
                     chromePID = startWebDisplay(signageFile)
+                    print(chromePID)
                 else:
                     chromePID = startDisplay(controlFile, signageFile)
+                    print(chromePID)
                 # chrome = startDisplay(signageFile)
 
             os.environ['DISPLAY'] = ':0'
