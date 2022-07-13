@@ -140,10 +140,10 @@ def main():
                 signageFile = response.json()['contentPath']
                 if controlFile == '':
                     chromePID = startWebDisplay(signageFile)
-                    print(chromePID)
+                    print(chromePID.pid)
                 else:
                     chromePID = startDisplay(controlFile, signageFile)
-                    print(chromePID)
+                    print(chromePID.pid)
                 # chrome = startDisplay(signageFile)
 
             os.environ['DISPLAY'] = ':0'
