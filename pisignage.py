@@ -75,6 +75,7 @@ def main():
     tv = cec.Device(cec.CECDEVICE_TV)
     clearFiles()
     chromePID = None
+    tvStatusFlag = False
     tvStatus = False
 
     while True:
@@ -90,6 +91,7 @@ def main():
         piName = os.uname()[1]
         params["name"] = piName
         params["hash"] = hash
+        params["tvStatus"] = tvStatus
 
         try:
             response = httpx.post(f'{BASE_URL}/piConnect', json=params, timeout=None)
@@ -106,21 +108,30 @@ def main():
 
             elif status =="NoChange":
                 print("I am sentient!")
-                print(tv.is_on())
+                try:
+                    tvStatus = tv.is_on()
+                except OSError:
+                    tvStatus = "UnsupportedTV"
 
             else:
                 if status == "DEFAULT":
-                    if tvStatus:
+                    if tvStatusFlag:
                         print("turning tv off")
                         tv.standby()
-                        tvStatus = False
-                        # print(tv.is_on())
+                        tvStatusFlag = False
+                        try:
+                            tvStatus = tv.is_on()
+                        except OSError:
+                            tvStatus = "UnsupportedTV"
                 else:
-                    if not tvStatus:
+                    if not tvStatusFlag:
                         print("turning tv on")
                         tv.power_on()
-                        tvStatus = True
-                        # print(tv.is_on())
+                        tvStatusFlag = True
+                        try:
+                            tvStatus = tv.is_on()
+                        except OSError:
+                            tvStatus = "UnsupportedTV"
                 clearFiles()
                 if chromePID:
                     kill(chromePID.pid)
