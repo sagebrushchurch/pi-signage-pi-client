@@ -149,12 +149,12 @@ def main():
         params["piLogs"] = logList
 
         try:
-            # did timeout=None cuz in some cases the posts would time out, might need to change to 
+            # did timeout=None cuz in some cases the posts would time out, might need to change to
             # 5 seconds if going too long causes crash
             response = httpx.post(f'{BASE_URL}/piConnect', json=params, timeout=None)
             status = response.json()['status']
             recentLogs(f"Status: {status}")
-            # special case "command" keyword, from scriptPath, causes pi to execute command script 
+            # special case "command" keyword, from scriptPath, causes pi to execute command script
             # using flags included in contentPath.
             if status == "Command":
                 recentLogs("do command things")
@@ -180,7 +180,7 @@ def main():
                     tvStatus = "UnsupportedTV"
             # if not Command or NoChange, this is for actual content updating
             else:
-                # We check for DEFAULT keyword to use as a trigger to turn tv off since its probably 
+                # We check for DEFAULT keyword to use as a trigger to turn tv off since its probably
                 # done for the day when default content is live
                 if status == "DEFAULT":
                     if tvStatusFlag:
@@ -216,7 +216,7 @@ def main():
             # have to set display for screenshot, might be dup but its fine
             os.environ['DISPLAY'] = ':0'
             # take a screenshot of the display, sets the quality low and makes a thumbnail
-            subprocess.run(["scrot", "-q", "5", "-t", "10", "-o", "-z", f"/tmp/{piName}.png"], 
+            subprocess.run(["scrot", "-q", "5", "-t", "10", "-o", "-z", f"/tmp/{piName}.png"],
                            check=True)
             # build data object to upload screenshot to server
             data = {'piName': piName}
