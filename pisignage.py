@@ -88,7 +88,6 @@ def main():
         else:
             hash = 0
 
-        print(f"Pi Hash: {hash}")
         params = {}
         piName = os.uname()[1]
         params["name"] = piName
