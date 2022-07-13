@@ -24,7 +24,7 @@ if config['Restart']:
 if config['UploadScreenshot']:
     piName = os.uname()[1]
     os.environ['DISPLAY'] = ':0'
-    raspi2png = subprocess.run(["scrot", "-q", "5", "-t", "10", "-o", "-z", f"/tmp/{piName}.png"], 
+    raspi2png = subprocess.run(["scrot", "-q", "5", "-t", "10", "-o", "-z", f"/tmp/{piName}.png"],
                                check=True)
     
     data = {'piName': piName}

@@ -107,7 +107,10 @@ def main():
                 commandFile = response.json()['scriptPath']
                 commandFlags = response.json()['contentPath']
                 wget.download(commandFile, out='/tmp/commandfile.py')
-                subprocess.Popen(["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
+                try:
+                    subprocess.Popen(["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
+                except subprocess.CalledProcessError as e:
+                    print(e, "probably unsupported TV")
                 print(commandFlags, commandFile)
 
             elif status =="NoChange":
