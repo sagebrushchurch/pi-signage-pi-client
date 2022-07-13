@@ -1,5 +1,5 @@
 from cmath import log
-from traceback import recentLogs_exc
+from traceback import print_exc
 import os
 import hashlib
 import subprocess
@@ -175,6 +175,7 @@ def main():
         except Exception as e:
         # Keeping general exception so that loop never crashes out
             recentLogs('type is: ' + e.__class__.__name__)
+            print_exc()
             recentLogs("Caught a error...waiting and will try again")
             time.sleep(15)
 
