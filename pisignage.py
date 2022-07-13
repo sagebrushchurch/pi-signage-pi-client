@@ -153,7 +153,7 @@ def main():
                            check=True)
 
             data = {'piName': piName}
-            files = {'file': open(f'/tmp/{piName}.png', 'rb')}
+            files = {'file': open(f'/tmp/{piName}-thumb.png', 'rb')}
             r = httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files, timeout=None)
 
             print("I sleep...")
