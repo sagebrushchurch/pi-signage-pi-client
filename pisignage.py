@@ -1,13 +1,14 @@
-import httpx
+from traceback import print_exc
 import os
-import wget
 import hashlib
 import subprocess
 import time
 import psutil
+import httpx
+import wget
 import json
 import cec
-from traceback import print_exc
+
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
