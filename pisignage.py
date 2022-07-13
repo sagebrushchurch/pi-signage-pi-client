@@ -1,4 +1,7 @@
-from cmath import log
+"""Pi Client Signage Code
+Sends name and checksum to server and 
+server returns what content the pi should be displaying
+"""
 from traceback import print_exc
 import os
 import hashlib
@@ -7,7 +10,6 @@ import time
 import psutil
 import httpx
 import wget
-import json
 import cec
 
 
@@ -15,15 +17,23 @@ BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 logList = []
 
 def clearFiles():
+    """clears all temp files used for playback, ensures nothing is re-used"""
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
     if os.path.exists('/tmp/webPage.html'):
         os.remove('/tmp/webPage.html')
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
-        
-def md5checksum(fname):
 
+def md5checksum(fname):
+    """checksuming function to check media file being played back, sent to server to verify accuracy
+
+    Args:
+        fname (str): path to file to checksum
+
+    Returns:
+        str?: checksum of the file
+    """
     md5 = hashlib.md5()
 
     # handle content in binary form
@@ -35,13 +45,27 @@ def md5checksum(fname):
     return md5.hexdigest()
 
 def kill(proc_pid):
+    """Used to stop running process by ID
+
+    Args:
+        proc_pid (int?): the process ID
+    """
     process = psutil.Process(proc_pid)
     for proc in process.children(recursive=True):
         proc.kill()
     process.kill()
 
 def startDisplay(controlFile, signageFile):
+    """Starts chrome running the media content passed by signageFile
+    and run using controlFile
 
+    Args:
+        controlFile (str): path to file that controls how media is played
+        signageFile (str): path to media file
+
+    Returns:
+        PID: process object from spawning chrome
+    """
     clearFiles()
 
     wget.download(signageFile, out='/tmp/signageFile')
@@ -105,7 +129,6 @@ def main():
         params["hash"] = hash
         params["tvStatus"] = tvStatus
         params["piLogs"] = logList
-        print(logList)
 
         try:
             response = httpx.post(f'{BASE_URL}/piConnect', json=params, timeout=None)
