@@ -103,6 +103,7 @@ def main():
         params["hash"] = hash
         params["tvStatus"] = tvStatus
         params["piLogs"] = logList
+        print(logList)
 
         try:
             response = httpx.post(f'{BASE_URL}/piConnect', json=params, timeout=None)
