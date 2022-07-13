@@ -149,7 +149,8 @@ def main():
                 # chrome = startDisplay(signageFile)
 
             os.environ['DISPLAY'] = ':0'
-            subprocess.run(["scrot", "-q", "5", "-t", "10" "-o", "-z", f"/tmp/{piName}.png"], check=True)
+            subprocess.run(["scrot", "-q", "5", "-t", "10", "-o", "-z", f"/tmp/{piName}.png"], 
+                           check=True)
 
             data = {'piName': piName}
             files = {'file': open(f'/tmp/{piName}.png', 'rb')}
