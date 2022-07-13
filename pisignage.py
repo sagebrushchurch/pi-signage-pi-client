@@ -1,5 +1,5 @@
 """Pi Client Signage Code
-Sends name and checksum to server and 
+Sends name and checksum to server and
 server returns what content the pi should be displaying
 """
 from traceback import print_exc
@@ -73,9 +73,9 @@ def startDisplay(controlFile, signageFile):
 
     os.environ['DISPLAY'] = ':0'
 
-    chrome = subprocess.Popen(["chromium-browser", "--kiosk",
+    chrome = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
                                "--autoplay-policy=no-user-gesture-required",
-                               "/tmp/controlFile.html", ],
+                               "/tmp/controlFile.html", "--enable-features=WebContentsForceDark"],
                               stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     return chrome
@@ -88,7 +88,7 @@ def startWebDisplay(signageFile):
 
     os.environ['DISPLAY'] = ':0'
 
-    chrome2 = subprocess.Popen(["chromium-browser", "--kiosk",
+    chrome2 = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
                                 "--autoplay-policy=no-user-gesture-required",
                                 "/tmp/webPage.html"],
                                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
