@@ -7,6 +7,7 @@ import time
 import psutil
 import json
 import cec
+from traceback import print_exc
 
 BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
 
@@ -37,35 +38,33 @@ def kill(proc_pid):
     process.kill()
 
 def startDisplay(controlFile, signageFile):
-# def startDisplay(signageFile):
 
     clearFiles()
 
     filename = wget.download(signageFile, out='/tmp/signageFile')
-    # scriptfile = wget.download('https://pisignage.sagebrush.dev/pisignage_api/media/video.html', out='/tmp/controlFile.html')
     scriptfile = wget.download(controlFile, out='/tmp/controlFile.html')
-
-    print(filename)
-    print(scriptfile)
 
     os.environ['DISPLAY'] = ':0'
 
-    chrome = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/controlFile.html", ], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    chrome = subprocess.Popen(["chromium-browser", "--kiosk",
+                               "--autoplay-policy=no-user-gesture-required",
+                               "/tmp/controlFile.html", ],
+                              stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     return chrome
 
 def startWebDisplay(signageFile):
-    # def startDisplay(signageFile):
 
     clearFiles()
 
     filename = wget.download(signageFile, out='/tmp/webPage.html')
 
-    print(filename)
-
     os.environ['DISPLAY'] = ':0'
 
-    chrome2 = subprocess.Popen(["chromium-browser", "--kiosk", "--autoplay-policy=no-user-gesture-required", "/tmp/webPage.html"])
+    chrome2 = subprocess.Popen(["chromium-browser", "--kiosk",
+                                "--autoplay-policy=no-user-gesture-required",
+                                "/tmp/webPage.html"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     return chrome2
 
@@ -107,10 +106,7 @@ def main():
 
             elif status =="NoChange":
                 print("I am sentient!")
-                try:
-                    print(tv.is_on())
-                except:
-                    pass
+                print(tv.is_on())
 
             else:
                 if status == "DEFAULT":
@@ -146,9 +142,10 @@ def main():
             print("sleeping...")
             time.sleep(30)
         except Exception as e:
-            print(e)
+            print ('type is:', e.__class__.__name__)
+            print_exc()
             print("Caught a error...waiting and will try again")
-            time.sleep(60)
+            time.sleep(15)
 
 if __name__ == "__main__":
     main()
