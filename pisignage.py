@@ -143,11 +143,8 @@ def main():
                 signageFile = response.json()['contentPath']
                 if controlFile == '':
                     chromePID = startWebDisplay(signageFile)
-                    print(chromePID.pid)
                 else:
                     chromePID = startDisplay(controlFile, signageFile)
-                    print(chromePID.pid)
-                # chrome = startDisplay(signageFile)
 
             os.environ['DISPLAY'] = ':0'
             subprocess.run(["scrot", "-q", "5", "-t", "10", "-o", "-z", f"/tmp/{piName}.png"], 
