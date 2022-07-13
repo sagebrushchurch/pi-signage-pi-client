@@ -73,6 +73,8 @@ def startWebDisplay(signageFile):
 
 def recentLogs(logMessage: str):
 
+    if len(logList) > 50:
+        logList.pop(0)
     logList.append(logMessage)
     
     print(logMessage)
@@ -89,7 +91,7 @@ def main():
     tvStatus = "False"
 
     while True:
-        recentLogs(tvStatus)
+        recentLogs("TV Power Status: " + tvStatus)# remove for prod
         if os.path.exists('/tmp/signageFile'):
             hash = md5checksum('/tmp/signageFile')
         elif os.path.exists('/tmp/webPage.html'):
