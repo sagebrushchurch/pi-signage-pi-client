@@ -2,4 +2,5 @@
 The client software for the individual Pis
 
 Need to apt install scrot, cec-utils
-Need to pip3 install httpx
+
+Need to pip3 install httpx, cec, wget
