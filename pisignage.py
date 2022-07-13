@@ -76,7 +76,7 @@ def main():
     clearFiles()
     chromePID = None
     tvStatusFlag = False
-    tvStatus = False
+    tvStatus = "False"
 
     while True:
         print(tvStatus)
@@ -110,7 +110,7 @@ def main():
             elif status =="NoChange":
                 print("I am sentient!")
                 try:
-                    tvStatus = tv.is_on()
+                    tvStatus = str(tv.is_on())
                 except OSError:
                     tvStatus = "UnsupportedTV"
 
@@ -121,7 +121,7 @@ def main():
                         tv.standby()
                         tvStatusFlag = False
                         try:
-                            tvStatus = tv.is_on()
+                            tvStatus = str(tv.is_on())
                         except OSError:
                             tvStatus = "UnsupportedTV"
                 else:
@@ -130,7 +130,7 @@ def main():
                         tv.power_on()
                         tvStatusFlag = True
                         try:
-                            tvStatus = tv.is_on()
+                            tvStatus = str(tv.is_on())
                         except OSError:
                             tvStatus = "UnsupportedTV"
                 clearFiles()
