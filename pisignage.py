@@ -13,7 +13,7 @@ import wget
 import cec
 
 
-BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
+BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 logList = []
 
 def clearFiles():
