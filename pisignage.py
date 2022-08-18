@@ -131,12 +131,14 @@ def main():
     chromePID = None
     tvStatusFlag = False
     tvStatus = "False"
-    ipAddr = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
+    
     screenInfo = subprocess.run(['fbset'], stdout=subprocess.PIPE, check=True)
     screenSplit = screenInfo.stdout.decode().split()
     screenRes = screenSplit[1].replace('"', '')
     
-    print(ipAddr.stdout.decode())
+    ipAddrInfo = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
+    
+    ipAddrs = ipAddrInfo.stdout.decode().replace(' ', '\n')
 
     while True:
         recentLogs("TV Power Status: " + tvStatus)# remove for prod
@@ -155,7 +157,7 @@ def main():
         params["hash"] = hash
         params["tvStatus"] = tvStatus
         params["piLogs"] = logList
-        params["ipAddr"] = ipAddr.stdout.decode()
+        params["ipAddr"] = ipAddrs
         params["screenRes"] = screenRes
 
         try:
