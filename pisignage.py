@@ -135,7 +135,9 @@ def main():
     tvStatus = "False"
     hostname = socket.gethostname()
     ipAddr = socket.gethostbyname(hostname)
-    screenRes = str(get_monitors())
+    screenRes = []
+    for m in get_monitors():
+        screenRes.append(str(m))
     print(screenRes)
     print(ipAddr)
     
@@ -158,7 +160,7 @@ def main():
         params["tvStatus"] = tvStatus
         params["piLogs"] = logList
         params["ipAddr"] = ipAddr
-        params["screenRes"] = screenRes
+        params["screenRes"] = str(screenRes)
 
         try:
             # did timeout=None cuz in some cases the posts would time out, might need to change to
