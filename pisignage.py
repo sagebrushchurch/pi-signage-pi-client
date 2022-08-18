@@ -139,7 +139,7 @@ def main():
     print(screenSplit[1])
     print(ipAddr)
     
-    screenRes = "testing"
+    screenRes = screenSplit[1].replace('"', '')
 
     while True:
         recentLogs("TV Power Status: " + tvStatus)# remove for prod
