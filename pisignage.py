@@ -2,15 +2,19 @@
 Sends name and checksum to server and
 server returns what content the pi should be displaying
 """
+import ipaddress
 from traceback import print_exc
 import os
 import hashlib
 import subprocess
 import time
+import socket
 import psutil
 import httpx
 import wget
 import cec
+from screeninfo import get_monitors
+
 
 
 BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
@@ -129,6 +133,12 @@ def main():
     chromePID = None
     tvStatusFlag = False
     tvStatus = "False"
+    hostname = socket.gethostname()
+    ipAddr = socket.gethostbyname(hostname)
+    screenRes = str(get_monitors())
+    print(screenRes)
+    print(ipAddr)
+    
 
     while True:
         recentLogs("TV Power Status: " + tvStatus)# remove for prod
@@ -147,6 +157,8 @@ def main():
         params["hash"] = hash
         params["tvStatus"] = tvStatus
         params["piLogs"] = logList
+        params["ipAddr"] = ipAddr
+        params["screenRes"] = screenRes
 
         try:
             # did timeout=None cuz in some cases the posts would time out, might need to change to
