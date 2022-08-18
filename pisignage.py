@@ -8,7 +8,6 @@ import os
 import hashlib
 import subprocess
 import time
-import socket
 import psutil
 import httpx
 import wget
@@ -132,14 +131,12 @@ def main():
     chromePID = None
     tvStatusFlag = False
     tvStatus = "False"
-    hostname = socket.gethostname()
-    ipAddr = socket.gethostbyname(hostname)
+    ipAddr = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
     screenInfo = subprocess.run(['fbset'], stdout=subprocess.PIPE, check=True)
     screenSplit = screenInfo.stdout.decode().split()
-    print(screenSplit[1])
-    print(ipAddr)
-    
     screenRes = screenSplit[1].replace('"', '')
+    
+    print(ipAddr)
 
     while True:
         recentLogs("TV Power Status: " + tvStatus)# remove for prod
