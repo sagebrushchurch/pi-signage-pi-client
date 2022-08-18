@@ -138,7 +138,7 @@ def main():
     
     ipAddrInfo = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
     
-    ipAddrs = ipAddrInfo.stdout.decode().replace(' ', '\n')
+    ipAddrs = ipAddrInfo.stdout.decode().replace(' ', ',')
 
     while True:
         recentLogs("TV Power Status: " + tvStatus)# remove for prod
