@@ -136,7 +136,7 @@ def main():
     screenSplit = screenInfo.stdout.decode().split()
     screenRes = screenSplit[1].replace('"', '')
     
-    print(ipAddr)
+    print(ipAddr.stdout.decode())
 
     while True:
         recentLogs("TV Power Status: " + tvStatus)# remove for prod
@@ -155,7 +155,7 @@ def main():
         params["hash"] = hash
         params["tvStatus"] = tvStatus
         params["piLogs"] = logList
-        params["ipAddr"] = ipAddr
+        params["ipAddr"] = ipAddr.stdout.decode()
         params["screenRes"] = screenRes
 
         try:
