@@ -135,7 +135,7 @@ def main():
     hostname = socket.gethostname()
     ipAddr = socket.gethostbyname(hostname)
     screenInfo = subprocess.run(['fbset'], stdout=subprocess.PIPE, check=True)
-    print(screenInfo.stdout.decode().partition('\n')[0])
+    print(screenInfo.stdout.decode().split('\n', 1)[0])
     print(ipAddr)
     
     screenRes = "testing"
