@@ -2,6 +2,7 @@
 Sends name and checksum to server and
 server returns what content the pi should be displaying
 """
+import ipaddress
 from traceback import print_exc
 import os
 import hashlib
@@ -129,6 +130,13 @@ def main():
     chromePID = None
     tvStatusFlag = False
     tvStatus = "False"
+    
+    screenInfo = subprocess.run(['fbset'], stdout=subprocess.PIPE, check=True)
+    screenSplit = screenInfo.stdout.decode().split()
+    screenRes = screenSplit[1].replace('"', '')
+    
+    ipAddrInfo = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
+    ipAddrs = ipAddrInfo.stdout.decode()
 
     while True:
         recentLogs("TV Power Status: " + tvStatus)# remove for prod
@@ -147,6 +155,8 @@ def main():
         params["hash"] = hash
         params["tvStatus"] = tvStatus
         params["piLogs"] = logList
+        params["ipAddr"] = ipAddrs
+        params["screenRes"] = screenRes
 
         try:
             # did timeout=None cuz in some cases the posts would time out, might need to change to
