@@ -137,7 +137,6 @@ def main():
     screenRes = screenSplit[1].replace('"', '')
     
     ipAddrInfo = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
-    
     ipAddrs = ipAddrInfo.stdout.decode().replace(' ', ',')
 
     while True:
