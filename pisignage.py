@@ -13,7 +13,6 @@ import psutil
 import httpx
 import wget
 import cec
-from screeninfo import get_monitors
 
 
 
@@ -135,10 +134,11 @@ def main():
     tvStatus = "False"
     hostname = socket.gethostname()
     ipAddr = socket.gethostbyname(hostname)
-    screenRes = str(get_monitors()[1])
-    print(screenRes)
+    screenInfo = subprocess.run(['fbset'], stdout=subprocess.PIPE, check=True)
+    print(screenInfo.stdout.decode())
     print(ipAddr)
     
+    screenRes = "testing"
 
     while True:
         recentLogs("TV Power Status: " + tvStatus)# remove for prod
