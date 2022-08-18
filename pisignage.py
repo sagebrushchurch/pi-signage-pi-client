@@ -135,7 +135,7 @@ def main():
     tvStatus = "False"
     hostname = socket.gethostname()
     ipAddr = socket.gethostbyname(hostname)
-    screenRes = str(get_monitors()[0])
+    screenRes = str(get_monitors()[1])
     print(screenRes)
     print(ipAddr)
     
