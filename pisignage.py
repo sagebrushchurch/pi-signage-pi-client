@@ -15,7 +15,7 @@ import cec
 
 
 
-BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
+BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
 
 def clearFiles():
