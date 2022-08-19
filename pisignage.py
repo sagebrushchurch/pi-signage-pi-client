@@ -219,8 +219,6 @@ def main():
                 # pull the paths of the files from the server response so we can download each
                 controlFile = response.json()['scriptPath']
                 signageFile = response.json()['contentPath']
-                print(controlFile)
-                print(signageFile)
                 if controlFile == 'https://piman.sagebrush.dev/pi_manager_api/media/':
                     chromePID = startWebDisplay(signageFile)
                 else:
