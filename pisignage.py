@@ -221,7 +221,7 @@ def main():
                 signageFile = response.json()['contentPath']
                 print(controlFile)
                 print(signageFile)
-                if controlFile == '':
+                if controlFile == 'https://piman.sagebrush.dev/pi_manager_api/media/':
                     chromePID = startWebDisplay(signageFile)
                 else:
                     chromePID = startDisplay(controlFile, signageFile)
