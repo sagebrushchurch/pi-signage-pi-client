@@ -14,7 +14,7 @@ import wget
 import cec
 
 
-BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
+BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
 
 def clearFiles():
@@ -219,7 +219,7 @@ def main():
                 # pull the paths of the files from the server response so we can download each
                 controlFile = response.json()['scriptPath']
                 signageFile = response.json()['contentPath']
-                if controlFile == 'https://piman.sagebrush.dev/pi_manager_api/media/':
+                if controlFile == 'https://piman.sagebrush.dev/pi_manager_api/media/' or controlFile == 'https://piman.sagebrush.work/pi_manager_api/media/':
                     chromePID = startWebDisplay(signageFile)
                 else:
                     chromePID = startDisplay(controlFile, signageFile)
