@@ -219,6 +219,8 @@ def main():
                 # pull the paths of the files from the server response so we can download each
                 controlFile = response.json()['scriptPath']
                 signageFile = response.json()['contentPath']
+                print(controlFile)
+                print(signageFile)
                 if controlFile == '':
                     chromePID = startWebDisplay(signageFile)
                 else:
