@@ -75,7 +75,7 @@ def startDisplay(controlFile, signageFile):
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     chrome = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
                                "--autoplay-policy=no-user-gesture-required",
-                               "/tmp/controlFile.html", "--enable-features=WebContentsForceDark"],
+                               "/tmp/controlFile.html"],
                               stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     return chrome
@@ -95,7 +95,7 @@ def startWebDisplay(signageFile):
     # have to set the environment var for the display so chrome knows where to output
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
-    chrome2 = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
+    chrome2 = subprocess.Popen(["chromium-browser", "--kiosk",
                                 "--autoplay-policy=no-user-gesture-required",
                                 "/tmp/webPage.html"],
                                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
