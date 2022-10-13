@@ -113,10 +113,24 @@ def recentLogs(logMessage: str):
     """
     if len(logList) > 50:
         logList.pop(0)
-    logList.append(logMessage)
+    logList.append(datetime.datetime.now() + logMessage)
 
-    print(logMessage) # print to pi console for debug
+    print(datetime.datetime.now() + logMessage) # print to pi console for debug
     return logList
+
+def getIP():
+    
+    ipAddrInfo = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
+    ipAddrs = ipAddrInfo.stdout.decode()
+    
+    return ipAddrs
+
+def getScreenRes():
+    screenInfo = subprocess.run(['fbset'], stdout=subprocess.PIPE, check=True)
+    screenSplit = screenInfo.stdout.decode().split()
+    screenRes = screenSplit[1].replace('"', '')
+    
+    return screenRes
 
 
 def main():
@@ -130,16 +144,17 @@ def main():
     chromePID = None
     tvStatusFlag = False
     tvStatus = "False"
-    
-    screenInfo = subprocess.run(['fbset'], stdout=subprocess.PIPE, check=True)
-    screenSplit = screenInfo.stdout.decode().split()
-    screenRes = screenSplit[1].replace('"', '')
-    
-    ipAddrInfo = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
-    ipAddrs = ipAddrInfo.stdout.decode()
+    loopDelayCounter = 0
+
 
     while True:
-        recentLogs("TV Power Status: " + tvStatus)# remove for prod
+        if loopDelayCounter == 5:
+            ipAddrs = getIP()
+            screenRes = getScreenRes()
+            loopDelayCounter = 0
+        loopDelayCounter += 1
+            
+        recentLogs("TV Power Status: " + tvStatus)
         # checks if signageFile exists first then checksums, if not checksum the webpage file, else 0
         # first loop 0 since no files should exist
         if os.path.exists('/tmp/signageFile'):
