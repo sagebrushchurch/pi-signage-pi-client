@@ -73,6 +73,9 @@ def startDisplay(controlFile, signageFile):
     # have to set the environment var for the display so chrome knows where to output
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
+    # TODO add if control file is .vid, run video with vlc, otherwise do chrome things
+    # TODO change chrome to generic process ID var so doesnt matter which program was running before
+    # TODO figure out vlc flags
     chrome = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
                                "--autoplay-policy=no-user-gesture-required",
                                "/tmp/controlFile.html"],
