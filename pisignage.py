@@ -121,9 +121,9 @@ def recentLogs(logMessage: str):
     """
     if len(logList) > 50:
         logList.pop(0)
-    logList.append(datetime.datetime.now() + logMessage)
+    logList.append(str(datetime.datetime.now()) + logMessage)
 
-    print(datetime.datetime.now() + logMessage) # print to pi console for debug
+    print(str(datetime.datetime.now()) + logMessage) # print to pi console for debug
     return logList
 
 def getIP():
