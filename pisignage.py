@@ -88,9 +88,8 @@ def startDisplay(controlFile, signageFile):
                                 "--mouse-hide-timeout 1",
                                 "--no-osd",
                                 "-L",
-                                "/tmp/signageFile"],
-                                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        print(pid + "video file")
+                                "/tmp/signageFile"])
+        print("video file")
     else:
         print("not video file")
         pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
