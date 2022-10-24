@@ -153,7 +153,8 @@ def main():
     tvStatusFlag = False
     tvStatus = "False"
     loopDelayCounter = 0
-    ipAddrs = None
+    ipAddrs = getIP()
+    screenRes = getScreenRes()
 
 
     while True:
