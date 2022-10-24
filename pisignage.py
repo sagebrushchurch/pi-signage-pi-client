@@ -84,7 +84,7 @@ def startDisplay(controlFile, signageFile):
         pass
     
     if 'video' in fileType:
-        pid = subprocess.Popen(["cvlc", "-f", "--video-on-top",
+        pid = subprocess.Popen(["cvlc", "-f",
                                 "--mouse-hide-timeout",
                                 "1",
                                 "--no-osd",
