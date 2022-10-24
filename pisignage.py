@@ -76,13 +76,17 @@ def startDisplay(controlFile, signageFile):
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     # TODO add if control file is .vid, run video with vlc, otherwise do chrome things
-    # TODO change chrome to generic process ID var so doesnt matter which program was running before
     try:
-        print(magic.from_file('/tmp/signageFile', mime=True))
+        fileType = magic.from_file('/tmp/signageFile', mime=True)
+        print(fileType)
     except:
         print("failed to read file type")
         pass
     
+    if 'video' in fileType:
+        print("video file")
+    else:
+        print("not video file")
     pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
                                "--autoplay-policy=no-user-gesture-required",
                                "/tmp/controlFile.html"],
