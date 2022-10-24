@@ -89,7 +89,8 @@ def startDisplay(controlFile, signageFile):
                                 "1",
                                 "--no-osd",
                                 "-L",
-                                "/tmp/signageFile"])
+                                "/tmp/signageFile"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         print("video file")
     else:
         print("not video file")
