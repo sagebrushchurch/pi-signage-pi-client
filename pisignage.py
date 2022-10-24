@@ -90,7 +90,7 @@ def startDisplay(controlFile, signageFile):
                                 "-L",
                                 "/tmp/signageFile"],
                                 stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        print("video file")
+        print(pid + "video file")
     else:
         print("not video file")
         pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
