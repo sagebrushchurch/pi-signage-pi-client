@@ -88,6 +88,7 @@ def startDisplay(controlFile, signageFile):
                                 "--mouse-hide-timeout",
                                 "1",
                                 "--no-osd",
+                                "--video-wallpaper",
                                 "-L",
                                 "/tmp/signageFile"],
                                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
