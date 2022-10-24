@@ -84,13 +84,19 @@ def startDisplay(controlFile, signageFile):
         pass
     
     if 'video' in fileType:
+        pid = subprocess.Popen(["cvlc", "-f", "--video-on-top",
+                                "--mouse-hide-timeout 1",
+                                "--no-osd",
+                                "-L",
+                                "/tmp/signageFile"],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         print("video file")
     else:
         print("not video file")
-    pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
-                               "--autoplay-policy=no-user-gesture-required",
-                               "/tmp/controlFile.html"],
-                              stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
+                                "--autoplay-policy=no-user-gesture-required",
+                                "/tmp/controlFile.html"],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     
     # cvlc -f --video-on-top --mouse-hide-timeout 1 --no-osd -L /tmp/signageFile
 
