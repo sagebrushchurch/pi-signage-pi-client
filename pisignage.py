@@ -12,6 +12,7 @@ import psutil
 import httpx
 import wget
 import cec
+import magic
 
 
 BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
@@ -75,13 +76,16 @@ def startDisplay(controlFile, signageFile):
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     # TODO add if control file is .vid, run video with vlc, otherwise do chrome things
     # TODO change chrome to generic process ID var so doesnt matter which program was running before
-    # TODO figure out vlc flags
-    chrome = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
+    print(magic.from_file(signageFile, mime=True))
+    
+    pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
                                "--autoplay-policy=no-user-gesture-required",
                                "/tmp/controlFile.html"],
                               stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    
+    # cvlc -f --video-on-top --mouse-hide-timeout 1 --no-osd -L /tmp/signageFile
 
-    return chrome
+    return pid
 
 def startWebDisplay(signageFile):
     """Starts chrome running the website passed by signageFile
@@ -90,7 +94,7 @@ def startWebDisplay(signageFile):
         signageFile (str): html file with site redirect
 
     Returns:
-        PID: process object from spawning chrome
+        PID: process object from spawning pid
     """
     clearFiles()
     # output the file to /tmp so it would get purged on a reboot
@@ -98,12 +102,12 @@ def startWebDisplay(signageFile):
     # have to set the environment var for the display so chrome knows where to output
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
-    chrome2 = subprocess.Popen(["chromium-browser", "--kiosk",
+    pid2 = subprocess.Popen(["chromium-browser", "--kiosk",
                                 "--autoplay-policy=no-user-gesture-required",
                                 "/tmp/webPage.html"],
                                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
-    return chrome2
+    return pid2
 
 def recentLogs(logMessage: str):
     """keeps track of the previous 50 debug messages for sending to server
