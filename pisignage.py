@@ -85,6 +85,7 @@ def startDisplay(controlFile, signageFile):
     
     if 'video' in fileType:
         pid = subprocess.Popen(["cvlc",
+                                "-f"
                                 "-L",
                                 "/tmp/signageFile"],
                                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
