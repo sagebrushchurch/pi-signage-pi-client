@@ -77,7 +77,10 @@ def startDisplay(controlFile, signageFile):
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     # TODO add if control file is .vid, run video with vlc, otherwise do chrome things
     # TODO change chrome to generic process ID var so doesnt matter which program was running before
-    print(magic.from_file(signageFile, mime=True))
+    try:
+        print(magic.from_file(signageFile, mime=True))
+    except:
+        pass
     
     pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
                                "--autoplay-policy=no-user-gesture-required",
@@ -121,9 +124,9 @@ def recentLogs(logMessage: str):
     """
     if len(logList) > 50:
         logList.pop(0)
-    logList.append(str(datetime.datetime.now()) + logMessage)
+    logList.append(str(datetime.datetime.now()) + ' - ' + logMessage)
 
-    print(str(datetime.datetime.now()) + logMessage) # print to pi console for debug
+    print(str(datetime.datetime.now()) + ' - ' + logMessage) # print to pi console for debug
     return logList
 
 def getIP():
