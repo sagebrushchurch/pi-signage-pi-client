@@ -150,9 +150,12 @@ def getIP():
     return ipAddrs
 
 def getScreenRes():
-    screenInfo = subprocess.run(['fbset'], stdout=subprocess.PIPE, check=True)
-    screenSplit = screenInfo.stdout.decode().split()
-    screenRes = screenSplit[1].replace('"', '')
+    try:
+        screenInfo = subprocess.run(['fbset'], stdout=subprocess.PIPE, check=True)
+        screenSplit = screenInfo.stdout.decode().split()
+        screenRes = screenSplit[1].replace('"', '')
+    except CalledProcessError:
+        screenRes = "No Screen Attached"
     
     return screenRes
 
