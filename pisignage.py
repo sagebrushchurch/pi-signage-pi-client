@@ -19,6 +19,7 @@ import magic
 BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 logList = []
 
+
 def clearFiles():
     """clears all temp files used for playback, ensures nothing is re-used"""
     if os.path.exists('/tmp/signageFile'):
@@ -27,6 +28,7 @@ def clearFiles():
         os.remove('/tmp/webPage.html')
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
+
 
 def md5checksum(fname):
     """checksuming function to check media file being played back, sent to server to verify accuracy
@@ -46,6 +48,7 @@ def md5checksum(fname):
 
     return md5.hexdigest()
 
+
 def kill(proc_pid):
     """Used to stop running process by ID
 
@@ -56,6 +59,7 @@ def kill(proc_pid):
     for proc in process.children(recursive=True):
         proc.kill()
     process.kill()
+
 
 def startDisplay(controlFile, signageFile):
     """Starts chrome running the media content passed by signageFile
@@ -71,7 +75,8 @@ def startDisplay(controlFile, signageFile):
     clearFiles()
     # output the files to /tmp so they would get purged on a reboot
     wget.download(signageFile, out='/tmp/signageFile')
-    wget.download(controlFile, out='/tmp/controlFile.html')
+    if not controlFile == '':
+        wget.download(controlFile, out='/tmp/controlFile.html')
     # have to set the environment var for the display so chrome knows where to output
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
@@ -82,7 +87,7 @@ def startDisplay(controlFile, signageFile):
     except:
         print("failed to read file type")
         pass
-    
+
     if 'video' in fileType:
         pid = subprocess.Popen(["cvlc",
                                 "--video-wallpaper",
@@ -95,14 +100,18 @@ def startDisplay(controlFile, signageFile):
         print("video file")
     else:
         print("not video file")
-        pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
-                                "--autoplay-policy=no-user-gesture-required",
-                                "/tmp/controlFile.html"],
-                                stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-    
+        if not controlFile == '':
+            pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
+                                    "--autoplay-policy=no-user-gesture-required",
+                                    "/tmp/controlFile.html"],
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        else:
+            print('Control File Missing')
+
     # cvlc -f --video-on-top --mouse-hide-timeout 1 --no-osd -L /tmp/signageFile
 
     return pid
+
 
 def startWebDisplay(signageFile):
     """Starts chrome running the website passed by signageFile
@@ -120,11 +129,12 @@ def startWebDisplay(signageFile):
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     pid2 = subprocess.Popen(["chromium-browser", "--kiosk",
-                                "--autoplay-policy=no-user-gesture-required",
-                                "/tmp/webPage.html"],
-                               stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                             "--autoplay-policy=no-user-gesture-required",
+                             "/tmp/webPage.html"],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     return pid2
+
 
 def recentLogs(logMessage: str):
     """keeps track of the previous 50 debug messages for sending to server
@@ -139,24 +149,29 @@ def recentLogs(logMessage: str):
         logList.pop(0)
     logList.append(str(datetime.datetime.now()) + ' - ' + logMessage)
 
-    print(str(datetime.datetime.now()) + ' - ' + logMessage) # print to pi console for debug
+    # print to pi console for debug
+    print(str(datetime.datetime.now()) + ' - ' + logMessage)
     return logList
 
+
 def getIP():
-    
-    ipAddrInfo = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
+
+    ipAddrInfo = subprocess.run(
+        ['hostname', '-I'], stdout=subprocess.PIPE, check=True)
     ipAddrs = ipAddrInfo.stdout.decode()
-    
+
     return ipAddrs
+
 
 def getScreenRes():
     try:
-        screenInfo = subprocess.run(['fbset'], stdout=subprocess.PIPE, check=True)
+        screenInfo = subprocess.run(
+            ['fbset'], stdout=subprocess.PIPE, check=True)
         screenSplit = screenInfo.stdout.decode().split()
         screenRes = screenSplit[1].replace('"', '')
     except subprocess.CalledProcessError:
         screenRes = "No Screen Attached"
-    
+
     return screenRes
 
 
@@ -175,14 +190,13 @@ def main():
     ipAddrs = getIP()
     screenRes = getScreenRes()
 
-
     while True:
         if loopDelayCounter == 5:
             ipAddrs = getIP()
             screenRes = getScreenRes()
             loopDelayCounter = 0
         loopDelayCounter += 1
-            
+
         recentLogs("TV Power Status: " + tvStatus)
         # checks if signageFile exists first then checksums, if not checksum the webpage file, else 0
         # first loop 0 since no files should exist
@@ -205,7 +219,8 @@ def main():
         try:
             # did timeout=None cuz in some cases the posts would time out, might need to change to
             # 5 seconds if going too long causes crash
-            response = httpx.post(f'{BASE_URL}/piConnect', json=params, timeout=None)
+            response = httpx.post(
+                f'{BASE_URL}/piConnect', json=params, timeout=None)
             status = response.json()['status']
             recentLogs(f"Status: {status}")
             # special case "command" keyword, from scriptPath, causes pi to execute command script
@@ -216,7 +231,8 @@ def main():
                 commandFlags = response.json()['contentPath']
                 wget.download(commandFile, out='/tmp/commandfile.py')
                 try:
-                    subprocess.Popen(["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
+                    subprocess.Popen(
+                        ["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
                 # sometimes tvon/off will throw an error cuz cec is a mess, so just in case
                 except subprocess.CalledProcessError as e:
                     recentLogs(e)
@@ -225,7 +241,7 @@ def main():
                 recentLogs(commandFile)
             # dont want the pi to update on every loop if content is the same, checks tv status on
             # each loop for dashboard updating
-            elif status =="NoChange":
+            elif status == "NoChange":
                 recentLogs("I am sentient!")
                 try:
                     tvStatus = str(tv.is_on())
@@ -277,7 +293,8 @@ def main():
             # upload -thumb file so its smol
             files = {'file': open(f'/tmp/{piName}-thumb.png', 'rb')}
             # timeout=None so it doesnt timeout for upload or whatever
-            httpx.post(f'{BASE_URL}/UploadPiScreenshot', data=data, files=files, timeout=None)
+            httpx.post(f'{BASE_URL}/UploadPiScreenshot',
+                       data=data, files=files, timeout=None)
             recentLogs("I sleep...")
             # main loop speed control
             time.sleep(30)
@@ -287,12 +304,13 @@ def main():
             time.sleep(1)
             recentLogs("chrome pid lost, restarting")
         except Exception as e:
-        # general exception so that loop never crashes out, it will print it to the logs
+            # general exception so that loop never crashes out, it will print it to the logs
             recentLogs('type is: ' + e.__class__.__name__)
             print_exc()
             recentLogs("Caught a error...waiting and will try again")
             # this timeout is if server is down or has minor issue, small delay to let it sort out
             time.sleep(15)
+
 
 if __name__ == "__main__":
     main()
