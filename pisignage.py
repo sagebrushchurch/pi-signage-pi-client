@@ -80,7 +80,6 @@ def startDisplay(controlFile, signageFile):
     # have to set the environment var for the display so chrome knows where to output
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
-    # TODO add if control file is .vid, run video with vlc, otherwise do chrome things
     try:
         fileType = magic.from_file('/tmp/signageFile', mime=True)
         print(fileType)
