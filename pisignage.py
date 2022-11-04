@@ -85,7 +85,7 @@ def startDisplay(controlFile, signageFile):
         fileType = magic.from_file('/tmp/signageFile', mime=True)
         print(fileType)
     except:
-        print("failed to read file type")
+        recentLogs("failed to read file type")
         pass
 
     if 'video' in fileType:
@@ -106,7 +106,7 @@ def startDisplay(controlFile, signageFile):
                                     "/tmp/controlFile.html"],
                                    stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         else:
-            print('Control File Missing')
+            recentLogs('Control File Missing')
 
     # cvlc -f --video-on-top --mouse-hide-timeout 1 --no-osd -L /tmp/signageFile
 
