@@ -147,10 +147,10 @@ def recentLogs(logMessage: str):
     """
     if len(logList) > 50:
         logList.pop(0)
-    logList.append(str(datetime.datetime.now()) + ' - ' + logMessage)
+    logList.append(str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ' - ' + logMessage)
 
     # print to pi console for debug
-    print(str(datetime.datetime.now()) + ' - ' + logMessage)
+    print(str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ' - ' + logMessage)
     return logList
 
 
