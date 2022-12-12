@@ -230,6 +230,7 @@ def main():
                 recentLogs("do command things")
                 commandFile = response.json()['scriptPath']
                 commandFlags = response.json()['contentPath']
+                recentLogs(commandFlags)
                 wget.download(commandFile, out='/tmp/commandfile.py')
                 try:
                     subprocess.Popen(
@@ -247,7 +248,8 @@ def main():
                 try:
                     tvStatus = str(tv.is_on())
                 # not all displays support cec, catching unsupported tv error
-                except OSError:
+                except OSError as e:
+                    recentLogs(e)
                     tvStatus = "UnsupportedTV"
             # if not Command or NoChange, this is for actual content updating
             else:
@@ -260,7 +262,8 @@ def main():
                         tvStatusFlag = False
                         try:
                             tvStatus = str(tv.is_on())
-                        except OSError:
+                        except OSError as e:
+                            recentLogs(e)
                             tvStatus = "UnsupportedTV"
                 else:
                     if not tvStatusFlag:
@@ -269,7 +272,8 @@ def main():
                         tvStatusFlag = True
                         try:
                             tvStatus = str(tv.is_on())
-                        except OSError:
+                        except OSError as e:
+                            recentLogs(e)
                             tvStatus = "UnsupportedTV"
                 # clear all files before we download more, we need to check if controlFile exists
                 # to determine if we the pi needs to display a webpage or other media
@@ -307,6 +311,7 @@ def main():
         except Exception as e:
             # general exception so that loop never crashes out, it will print it to the logs
             recentLogs('type is: ' + e.__class__.__name__)
+            recentLogs(e)
             print_exc()
             recentLogs("Caught a error...waiting and will try again")
             # this timeout is if server is down or has minor issue, small delay to let it sort out
