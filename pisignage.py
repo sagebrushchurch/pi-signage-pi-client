@@ -169,7 +169,7 @@ def getScreenRes():
             ['xrandr', '--display', ':0'], stdout=subprocess.PIPE, check=True)
         screenSplit = screenInfo.stdout.decode().split()
         # screenRes = screenSplit[1].replace('"', '')
-        screenRes = screenSplit[7] + screenSplit[8] + screenSplit[9]
+        screenRes = screenSplit[7] + screenSplit[8] + screenSplit[9].replace(',','')
     except subprocess.CalledProcessError:
         screenRes = "No Screen Attached"
 
