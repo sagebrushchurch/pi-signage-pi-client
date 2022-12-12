@@ -231,14 +231,19 @@ def main():
                 commandFile = response.json()['scriptPath']
                 commandFlags = response.json()['contentPath']
                 recentLogs(commandFlags)
-                wget.download(commandFile, out='/tmp/commandfile.py')
-                try:
-                    subprocess.Popen(
-                        ["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
-                # sometimes tvon/off will throw an error cuz cec is a mess, so just in case
-                except subprocess.CalledProcessError as e:
-                    recentLogs(e)
-                    recentLogs("probably unsupported TV")
+                if commandFlags == 'TurnOffTV':
+                    tv.standby()
+                elif commandFlags == 'TurnOnTV':
+                    tv.power_on()
+                else:
+                    wget.download(commandFile, out='/tmp/commandfile.py')
+                    try:
+                        subprocess.Popen(
+                            ["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
+                    # sometimes tvon/off will throw an error cuz cec is a mess, so just in case
+                    except subprocess.CalledProcessError as e:
+                        recentLogs(e)
+                        recentLogs("probably unsupported TV")
                 recentLogs(commandFlags)
                 recentLogs(commandFile)
             # dont want the pi to update on every loop if content is the same, checks tv status on
