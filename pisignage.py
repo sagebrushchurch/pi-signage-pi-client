@@ -242,7 +242,7 @@ def main():
                             ["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
                     # sometimes tvon/off will throw an error cuz cec is a mess, so just in case
                     except subprocess.CalledProcessError as e:
-                        recentLogs(e)
+                        recentLogs(str(e))
                         recentLogs("probably unsupported TV")
                 recentLogs(commandFlags)
                 recentLogs(commandFile)
