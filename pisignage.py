@@ -15,6 +15,7 @@ import wget
 import cec
 import magic
 
+PI_CLIENT_VERSION = '1.3'
 
 BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 # BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
@@ -147,10 +148,12 @@ def recentLogs(logMessage: str):
     """
     if len(logList) > 50:
         logList.pop(0)
-    logList.append(str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ' - ' + logMessage)
+    logList.append(str(datetime.datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S")) + ' - ' + logMessage)
 
     # print to pi console for debug
-    print(str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ' - ' + logMessage)
+    print(str(datetime.datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S")) + ' - ' + logMessage)
     return logList
 
 
@@ -169,7 +172,8 @@ def getScreenRes():
             ['xrandr', '--display', ':0'], stdout=subprocess.PIPE, check=True)
         screenSplit = screenInfo.stdout.decode().split()
         # screenRes = screenSplit[1].replace('"', '')
-        screenRes = screenSplit[7] + screenSplit[8] + screenSplit[9].replace(',','')
+        screenRes = screenSplit[7] + screenSplit[8] + \
+            screenSplit[9].replace(',', '')
     except subprocess.CalledProcessError:
         screenRes = "No Screen Attached"
 
@@ -216,6 +220,7 @@ def main():
         params["piLogs"] = logList
         params["ipAddr"] = ipAddrs
         params["screenRes"] = screenRes
+        params["clientVersion"] = PI_CLIENT_VERSION
 
         try:
             # did timeout=None cuz in some cases the posts would time out, might need to change to
