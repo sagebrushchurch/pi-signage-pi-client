@@ -77,19 +77,40 @@ def startDisplay(controlFile, signageFile):
     clearFiles()
     # output the files to /tmp so they would get purged on a reboot
     wget.download(signageFile, out='/tmp/signageFile')
-    wget.download(controlFile, out='/tmp/controlFile.html')
+    if not controlFile == '':
+        wget.download(controlFile, out='/tmp/controlFile.html')
     # have to set the environment var for the display so chrome knows where to output
     os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
-    if not controlFile == '':
-        pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark",
-                                "--kiosk",
-                                "--autoplay-policy=no-user-gesture-required",
-                                "/tmp/controlFile.html"],
-                               stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    try:
+        fileType = magic.from_file(
+            '/tmp/signageFile', mime=True)
+        print(fileType)
+    except:
+        recentLogs("failed to read file type")
+        pass
+
+    if 'video' in fileType:
+        pid = subprocess.Popen(["cvlc",
+                                "--video-wallpaper",
+                                "--no-osd",
+                                "mouse-hide-timeout",
+                                "1",
+                                "-L",
+                                "/tmp/signageFile"],
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.STDOUT)
+        print("video file")
     else:
-        recentLogs('Control File Missing')
+        if not controlFile == '':
+            pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark",
+                                    "--kiosk",
+                                    "--autoplay-policy=no-user-gesture-required",
+                                    "/tmp/controlFile.html"],
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        else:
+            recentLogs('Control File Missing')
 
     # cvlc -f --video-on-top --mouse-hide-timeout 1 --no-osd -L /tmp/signageFile
 
@@ -276,28 +297,8 @@ def main():
                 # pull the paths of the files from the server response so we can download each
                 controlFile = response.json()['scriptPath']
                 signageFile = response.json()['contentPath']
-                if controlFile == 'https://piman.sagebrush.dev/pi_manager_api/media/' or controlFile == 'https://piman.sagebrush.work/pi_manager_api/media/':
-                    try:
-                        fileType = magic.from_file(
-                            '/tmp/signageFile', mime=True)
-                        print(fileType)
-                    except:
-                        recentLogs("failed to read file type")
-                        pass
-
-                    if 'video' in fileType:
-                        chromePID = subprocess.Popen(["cvlc",
-                                                      "--video-wallpaper",
-                                                      "--no-osd",
-                                                      "mouse-hide-timeout",
-                                                      "1",
-                                                      "-L",
-                                                      "/tmp/signageFile"],
-                                                     stdout=subprocess.DEVNULL,
-                                                     stderr=subprocess.STDOUT)
-                        print("video file")
-                    else:
-                        chromePID = startWebDisplay(signageFile)
+                if controlFile == '' and signageFile.endswith('.html'):
+                    chromePID = startWebDisplay(signageFile)
                 else:
                     chromePID = startDisplay(controlFile, signageFile)
             # have to set display for screenshot, might be dup but its fine
