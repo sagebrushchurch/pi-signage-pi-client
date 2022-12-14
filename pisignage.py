@@ -130,6 +130,7 @@ def startWebDisplay(signageFile):
     # output the file to /tmp so it would get purged on a reboot
     wget.download(signageFile, out='/tmp/webPage.html')
     # have to set the environment var for the display so chrome knows where to output
+    os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     pid2 = subprocess.Popen(["chromium-browser", "--kiosk",
