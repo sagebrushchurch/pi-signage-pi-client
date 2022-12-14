@@ -80,6 +80,7 @@ def startDisplay(controlFile, signageFile):
     if not controlFile == '':
         wget.download(controlFile, out='/tmp/controlFile.html')
     # have to set the environment var for the display so chrome knows where to output
+    os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     try:
