@@ -15,6 +15,7 @@ import wget
 import cec
 import magic
 
+PI_CLIENT_VERSION = '1.3'
 
 # BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
@@ -147,10 +148,12 @@ def recentLogs(logMessage: str):
     """
     if len(logList) > 50:
         logList.pop(0)
-    logList.append(str(datetime.datetime.now()) + ' - ' + logMessage)
+    logList.append(str(datetime.datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S")) + ' - ' + logMessage)
 
     # print to pi console for debug
-    print(str(datetime.datetime.now()) + ' - ' + logMessage)
+    print(str(datetime.datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S")) + ' - ' + logMessage)
     return logList
 
 
@@ -166,9 +169,11 @@ def getIP():
 def getScreenRes():
     try:
         screenInfo = subprocess.run(
-            ['fbset'], stdout=subprocess.PIPE, check=True)
+            ['xrandr', '--display', ':0'], stdout=subprocess.PIPE, check=True)
         screenSplit = screenInfo.stdout.decode().split()
-        screenRes = screenSplit[1].replace('"', '')
+        # screenRes = screenSplit[1].replace('"', '')
+        screenRes = screenSplit[7] + screenSplit[8] + \
+            screenSplit[9].replace(',', '')
     except subprocess.CalledProcessError:
         screenRes = "No Screen Attached"
 
@@ -215,6 +220,7 @@ def main():
         params["piLogs"] = logList
         params["ipAddr"] = ipAddrs
         params["screenRes"] = screenRes
+        params["clientVersion"] = PI_CLIENT_VERSION
 
         try:
             # did timeout=None cuz in some cases the posts would time out, might need to change to
@@ -229,14 +235,20 @@ def main():
                 recentLogs("do command things")
                 commandFile = response.json()['scriptPath']
                 commandFlags = response.json()['contentPath']
-                wget.download(commandFile, out='/tmp/commandfile.py')
-                try:
-                    subprocess.Popen(
-                        ["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
-                # sometimes tvon/off will throw an error cuz cec is a mess, so just in case
-                except subprocess.CalledProcessError as e:
-                    recentLogs(e)
-                    recentLogs("probably unsupported TV")
+                recentLogs(commandFlags)
+                if commandFlags == 'TurnOffTV':
+                    tv.standby()
+                elif commandFlags == 'TurnOnTV':
+                    tv.power_on()
+                else:
+                    wget.download(commandFile, out='/tmp/commandfile.py')
+                    try:
+                        subprocess.Popen(
+                            ["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
+                    # sometimes tvon/off will throw an error cuz cec is a mess, so just in case
+                    except subprocess.CalledProcessError as e:
+                        recentLogs(str(e))
+                        recentLogs("probably unsupported TV")
                 recentLogs(commandFlags)
                 recentLogs(commandFile)
             # dont want the pi to update on every loop if content is the same, checks tv status on
@@ -246,7 +258,8 @@ def main():
                 try:
                     tvStatus = str(tv.is_on())
                 # not all displays support cec, catching unsupported tv error
-                except OSError:
+                except OSError as e:
+                    recentLogs(str(e))
                     tvStatus = "UnsupportedTV"
             # if not Command or NoChange, this is for actual content updating
             else:
@@ -259,7 +272,8 @@ def main():
                         tvStatusFlag = False
                         try:
                             tvStatus = str(tv.is_on())
-                        except OSError:
+                        except OSError as e:
+                            recentLogs(str(e))
                             tvStatus = "UnsupportedTV"
                 else:
                     if not tvStatusFlag:
@@ -268,7 +282,8 @@ def main():
                         tvStatusFlag = True
                         try:
                             tvStatus = str(tv.is_on())
-                        except OSError:
+                        except OSError as e:
+                            recentLogs(str(e))
                             tvStatus = "UnsupportedTV"
                 # clear all files before we download more, we need to check if controlFile exists
                 # to determine if we the pi needs to display a webpage or other media
@@ -306,6 +321,7 @@ def main():
         except Exception as e:
             # general exception so that loop never crashes out, it will print it to the logs
             recentLogs('type is: ' + e.__class__.__name__)
+            recentLogs(str(e))
             print_exc()
             recentLogs("Caught a error...waiting and will try again")
             # this timeout is if server is down or has minor issue, small delay to let it sort out
