@@ -16,9 +16,9 @@ import cec
 import magic
 
 PI_CLIENT_VERSION = '1.3.2'
-
-BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
-# BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
+# 
+# BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
+BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
 
 
