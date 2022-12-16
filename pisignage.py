@@ -15,8 +15,8 @@ import wget
 import cec
 import magic
 
-PI_CLIENT_VERSION = '1.3'
-
+PI_CLIENT_VERSION = '1.3.2'
+# 
 # BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
@@ -80,10 +80,12 @@ def startDisplay(controlFile, signageFile):
     if not controlFile == '':
         wget.download(controlFile, out='/tmp/controlFile.html')
     # have to set the environment var for the display so chrome knows where to output
+    os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     try:
-        fileType = magic.from_file('/tmp/signageFile', mime=True)
+        fileType = magic.from_file(
+            '/tmp/signageFile', mime=True)
         print(fileType)
     except:
         recentLogs("failed to read file type")
@@ -97,12 +99,13 @@ def startDisplay(controlFile, signageFile):
                                 "1",
                                 "-L",
                                 "/tmp/signageFile"],
-                               stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.STDOUT)
         print("video file")
     else:
-        print("not video file")
         if not controlFile == '':
-            pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark", "--kiosk",
+            pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark",
+                                    "--kiosk",
                                     "--autoplay-policy=no-user-gesture-required",
                                     "/tmp/controlFile.html"],
                                    stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
@@ -127,6 +130,7 @@ def startWebDisplay(signageFile):
     # output the file to /tmp so it would get purged on a reboot
     wget.download(signageFile, out='/tmp/webPage.html')
     # have to set the environment var for the display so chrome knows where to output
+    os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
     os.environ['DISPLAY'] = ':0'
     # pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     pid2 = subprocess.Popen(["chromium-browser", "--kiosk",
@@ -294,7 +298,7 @@ def main():
                 # pull the paths of the files from the server response so we can download each
                 controlFile = response.json()['scriptPath']
                 signageFile = response.json()['contentPath']
-                if controlFile == 'https://piman.sagebrush.dev/pi_manager_api/media/' or controlFile == 'https://piman.sagebrush.work/pi_manager_api/media/':
+                if controlFile == '' and signageFile.endswith('.html'):
                     chromePID = startWebDisplay(signageFile)
                 else:
                     chromePID = startDisplay(controlFile, signageFile)
