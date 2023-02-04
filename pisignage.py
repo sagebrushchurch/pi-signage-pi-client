@@ -12,13 +12,13 @@ import datetime
 import psutil
 import httpx
 import wget
-import cec
+# import cec
 import magic
 
-PI_CLIENT_VERSION = '1.3.2'
+PI_CLIENT_VERSION = '1.3.2c'
 # 
-# BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
-BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
+BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
+# BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
 
 
@@ -189,8 +189,8 @@ def main():
     updated, downloads control scripts for running media on each update,
     uploads screenshot to server for dashboard monitoring.
     """
-    cec.init()
-    tv = cec.Device(cec.CECDEVICE_TV)
+    # cec.init()
+    # tv = cec.Device(cec.CECDEVICE_TV)
     clearFiles()
     chromePID = None
     tvStatusFlag = False
@@ -241,9 +241,11 @@ def main():
                 commandFlags = response.json()['contentPath']
                 recentLogs(commandFlags)
                 if commandFlags == 'TurnOffTV':
-                    tv.standby()
+                    # tv.standby()
+                    continue
                 elif commandFlags == 'TurnOnTV':
-                    tv.power_on()
+                    # tv.power_on()
+                    continue
                 else:
                     wget.download(commandFile, out='/tmp/commandfile.py')
                     try:
@@ -260,7 +262,8 @@ def main():
             elif status == "NoChange":
                 recentLogs("I am sentient!")
                 try:
-                    tvStatus = str(tv.is_on())
+                    # tvStatus = str(tv.is_on())
+                    continue
                 # not all displays support cec, catching unsupported tv error
                 except OSError as e:
                     recentLogs(str(e))
@@ -272,20 +275,22 @@ def main():
                 if status == "DEFAULT":
                     if tvStatusFlag:
                         recentLogs("turning tv off")
-                        tv.standby()
+                        # tv.standby()
                         tvStatusFlag = False
                         try:
-                            tvStatus = str(tv.is_on())
+                            # tvStatus = str(tv.is_on())
+                            continue
                         except OSError as e:
                             recentLogs(str(e))
                             tvStatus = "UnsupportedTV"
                 else:
                     if not tvStatusFlag:
                         recentLogs("turning tv on")
-                        tv.power_on()
+                        # tv.power_on()
                         tvStatusFlag = True
                         try:
-                            tvStatus = str(tv.is_on())
+                            # tvStatus = str(tv.is_on())
+                            continue
                         except OSError as e:
                             recentLogs(str(e))
                             tvStatus = "UnsupportedTV"
