@@ -261,13 +261,13 @@ def main():
             # each loop for dashboard updating
             elif status == "NoChange":
                 recentLogs("I am sentient!")
-                try:
-                    # tvStatus = str(tv.is_on())
-                    continue
-                # not all displays support cec, catching unsupported tv error
-                except OSError as e:
-                    recentLogs(str(e))
-                    tvStatus = "UnsupportedTV"
+                # try:
+                #     # tvStatus = str(tv.is_on())
+                #     continue
+                # # not all displays support cec, catching unsupported tv error
+                # except OSError as e:
+                #     recentLogs(str(e))
+                #     tvStatus = "UnsupportedTV"
             # if not Command or NoChange, this is for actual content updating
             else:
                 # We check for DEFAULT keyword to use as a trigger to turn tv off since its probably
