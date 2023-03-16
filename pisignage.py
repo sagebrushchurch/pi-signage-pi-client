@@ -20,11 +20,11 @@ elif os.path.exists('/dev/cec0'):
     cecType = 'other'
 else:
     cecType = 'none'
+    recentLogs("no cec device found")
 
 
 
-PI_CLIENT_VERSION = '1.3.2c'
-# 
+PI_CLIENT_VERSION = '1.4.0b'
 BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 # BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
@@ -110,6 +110,19 @@ def startDisplay(controlFile, signageFile):
                                stdout=subprocess.DEVNULL,
                                stderr=subprocess.STDOUT)
         print("video file")
+
+    elif 'audio' in fileType:
+        pid = subprocess.Popen(["cvlc",
+                            "--video-wallpaper",
+                            "--no-osd",
+                            "mouse-hide-timeout",
+                            "1",
+                            "-L",
+                            "/tmp/signageFile"],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.STDOUT)
+        print("audio file")
+
     else:
         if not controlFile == '':
             pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark",
@@ -188,6 +201,20 @@ def getScreenRes():
 
     return screenRes
 
+def getPowerStateCecCtl(data):
+    lines = data.split('\n')
+    for line in lines:
+        if 'pwr-state' in line:
+            state = line.split(':')[-1].strip()
+            rawState = state.split()[0]
+            if rawState == 'standby':
+                return 'False'
+            elif rawState == 'on':
+                return 'True'
+            else:
+                return rawState
+    return 'Unknown'
+
 
 def main():
     """pisignage control, pings server to check content schedule, downloading new content when
@@ -197,6 +224,8 @@ def main():
     if cecType == 'raspi':
         cec.init()
         tv = cec.Device(cec.CECDEVICE_TV)
+    elif cecType == 'other':
+        subprocess.Popen("/usr/bin/cec-ctl", "--tv", "-S")
     clearFiles()
     chromePID = None
     tvStatusFlag = False
@@ -213,7 +242,7 @@ def main():
         loopDelayCounter += 1
 
         recentLogs("TV Power Status: " + tvStatus)
-        # checks if signageFile exists first then checksums, if not checksum the webpage file, else 0
+    # checks if signageFile exists first then checksums, if not checksum the webpage file, else 0
         # first loop 0 since no files should exist
         if os.path.exists('/tmp/signageFile'):
             hash = md5checksum('/tmp/signageFile')
@@ -247,11 +276,17 @@ def main():
                 commandFlags = response.json()['contentPath']
                 recentLogs(commandFlags)
                 if commandFlags == 'TurnOffTV':
-                    # tv.standby()
-                    continue
+                    if cecType == 'raspi':
+                        tv.standby()
+                    elif cecType == 'other':
+                        subprocess.Popen("/usr/bin/cec-ctl", "--to", "0", "--standby")
+
                 elif commandFlags == 'TurnOnTV':
-                    # tv.power_on()
-                    continue
+                    if cecType == 'raspi':
+                        tv.power_on()
+                    elif cecType == 'other':
+                        subprocess.Popen("/usr/bin/cec-ctl", "--to", "0", "--image-view-on")
+
                 else:
                     wget.download(commandFile, out='/tmp/commandfile.py')
                     try:
@@ -267,13 +302,19 @@ def main():
             # each loop for dashboard updating
             elif status == "NoChange":
                 recentLogs("I am sentient!")
-                # try:
-                #     # tvStatus = str(tv.is_on())
-                #     continue
-                # # not all displays support cec, catching unsupported tv error
-                # except OSError as e:
-                #     recentLogs(str(e))
-                #     tvStatus = "UnsupportedTV"
+                try:
+                    if cecType == 'raspi':
+                        tvStatus = str(tv.is_on())
+                    elif cecType == 'other':
+                      tvStatus = getPowerStateCecCtl(
+                                                subprocess.run(["/usr/bin/cec-ctl",
+                                                                "--to", "0",
+                                                                "--give-device-power-status"],
+                                                                check=True, stdout=subprocess.PIPE))
+                # not all displays support cec, catching unsupported tv error
+                except OSError as e:
+                    recentLogs(str(e))
+                    tvStatus = "UnsupportedTV"
             # if not Command or NoChange, this is for actual content updating
             else:
                 # We check for DEFAULT keyword to use as a trigger to turn tv off since its probably
@@ -281,22 +322,40 @@ def main():
                 if status == "DEFAULT":
                     if tvStatusFlag:
                         recentLogs("turning tv off")
-                        # tv.standby()
+                        if cecType == 'raspi':
+                            tv.standby()
+                        elif cecType == 'other':
+                            subprocess.Popen("/usr/bin/cec-ctl", "--to", "0", "--standby")
                         tvStatusFlag = False
                         try:
-                            # tvStatus = str(tv.is_on())
-                            continue
+                            if cecType == 'raspi':
+                                tvStatus = str(tv.is_on())
+                            elif cecType == 'other':
+                                tvStatus = getPowerStateCecCtl(
+                                                subprocess.run(["/usr/bin/cec-ctl",
+                                                                "--to", "0",
+                                                                "--give-device-power-status"],
+                                                                check=True, stdout=subprocess.PIPE))
                         except OSError as e:
                             recentLogs(str(e))
                             tvStatus = "UnsupportedTV"
                 else:
                     if not tvStatusFlag:
                         recentLogs("turning tv on")
-                        # tv.power_on()
+                        if cecType == 'raspi':
+                            tv.power_on()
+                        elif cecType == 'other':
+                            subprocess.Popen("/usr/bin/cec-ctl", "--to", "0", "--image-view-on")
                         tvStatusFlag = True
                         try:
-                            # tvStatus = str(tv.is_on())
-                            continue
+                            if cecType == 'raspi':
+                                tvStatus = str(tv.is_on())
+                            elif cecType =='other':
+                                tvStatus = getPowerStateCecCtl(
+                                                subprocess.run(["/usr/bin/cec-ctl",
+                                                                "--to", "0",
+                                                                "--give-device-power-status"],
+                                                                check=True, stdout=subprocess.PIPE))
                         except OSError as e:
                             recentLogs(str(e))
                             tvStatus = "UnsupportedTV"
@@ -330,7 +389,7 @@ def main():
             time.sleep(30)
         except psutil.NoSuchProcess:
             # Sometimes chrome's pid changes, i think its cuz of the redirect for webpage viewing
-            # but this catches it and another loop fixes it when it happens, so just loop again quickly
+        # but this catches it and another loop fixes it when it happens, so just loop again quickly
             time.sleep(1)
             recentLogs("chrome pid lost, restarting")
         except Exception as e:
