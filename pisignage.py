@@ -2,7 +2,6 @@
 Sends name and checksum to server and
 server returns what content the pi should be displaying
 """
-import ipaddress
 from traceback import print_exc
 import os
 import hashlib
@@ -12,8 +11,17 @@ import datetime
 import psutil
 import httpx
 import wget
-# import cec
 import magic
+
+if os.path.exists('/dev/vchiq'):
+    import cec
+    cecType = 'raspi'
+elif os.path.exists('/dev/cec0'):
+    cecType = 'other'
+else:
+    cecType = 'none'
+
+
 
 PI_CLIENT_VERSION = '1.3.2c'
 # 
@@ -111,9 +119,6 @@ def startDisplay(controlFile, signageFile):
                                    stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         else:
             recentLogs('Control File Missing')
-
-    # cvlc -f --video-on-top --mouse-hide-timeout 1 --no-osd -L /tmp/signageFile
-
     return pid
 
 
@@ -189,8 +194,9 @@ def main():
     updated, downloads control scripts for running media on each update,
     uploads screenshot to server for dashboard monitoring.
     """
-    # cec.init()
-    # tv = cec.Device(cec.CECDEVICE_TV)
+    if cecType == 'raspi':
+        cec.init()
+        tv = cec.Device(cec.CECDEVICE_TV)
     clearFiles()
     chromePID = None
     tvStatusFlag = False
