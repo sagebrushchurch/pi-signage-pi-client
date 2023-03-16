@@ -279,13 +279,15 @@ def main():
                     if cecType == 'raspi':
                         tv.standby()
                     elif cecType == 'other':
-                        subprocess.Popen("/usr/bin/cec-ctl", "--to", "0", "--standby")
+                        subprocess.Popen(["/usr/bin/cec-ctl", "--to", "0", "--standby"],
+                                         stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
 
                 elif commandFlags == 'TurnOnTV':
                     if cecType == 'raspi':
                         tv.power_on()
                     elif cecType == 'other':
-                        subprocess.Popen("/usr/bin/cec-ctl", "--to", "0", "--image-view-on")
+                        subprocess.Popen(["/usr/bin/cec-ctl", "--to", "0", "--image-view-on"],
+                                         stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
 
                 else:
                     wget.download(commandFile, out='/tmp/commandfile.py')
@@ -306,8 +308,7 @@ def main():
                     if cecType == 'raspi':
                         tvStatus = str(tv.is_on())
                     elif cecType == 'other':
-                      tvStatus = getPowerStateCecCtl(
-                                                subprocess.run(["/usr/bin/cec-ctl",
+                      tvStatus = getPowerStateCecCtl(subprocess.run(["/usr/bin/cec-ctl",
                                                                 "--to", "0",
                                                                 "--give-device-power-status"],
                                                                 check=True, stdout=subprocess.PIPE))
@@ -325,7 +326,8 @@ def main():
                         if cecType == 'raspi':
                             tv.standby()
                         elif cecType == 'other':
-                            subprocess.Popen("/usr/bin/cec-ctl", "--to", "0", "--standby")
+                            subprocess.Popen(["/usr/bin/cec-ctl", "--to", "0", "--standby"],
+                                             stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
                         tvStatusFlag = False
                         try:
                             if cecType == 'raspi':
@@ -345,14 +347,14 @@ def main():
                         if cecType == 'raspi':
                             tv.power_on()
                         elif cecType == 'other':
-                            subprocess.Popen("/usr/bin/cec-ctl", "--to", "0", "--image-view-on")
+                            subprocess.Popen(["/usr/bin/cec-ctl", "--to", "0", "--image-view-on"],
+                                             stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
                         tvStatusFlag = True
                         try:
                             if cecType == 'raspi':
                                 tvStatus = str(tv.is_on())
                             elif cecType =='other':
-                                tvStatus = getPowerStateCecCtl(
-                                                subprocess.run(["/usr/bin/cec-ctl",
+                                tvStatus = getPowerStateCecCtl(subprocess.run(["/usr/bin/cec-ctl",
                                                                 "--to", "0",
                                                                 "--give-device-power-status"],
                                                                 check=True, stdout=subprocess.PIPE))
