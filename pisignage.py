@@ -202,7 +202,8 @@ def getScreenRes():
     return screenRes
 
 def getPowerStateCecCtl(data):
-    lines = data.split('\n')
+    print(data)
+    lines = str(data).split('\n')
     for line in lines:
         if 'pwr-state' in line:
             state = line.split(':')[-1].strip()
