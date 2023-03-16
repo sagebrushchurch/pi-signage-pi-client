@@ -202,8 +202,7 @@ def getScreenRes():
     return screenRes
 
 def getPowerStateCecCtl(data):
-    print(data)
-    lines = str(data).split('\n')
+    lines = str(data).split('\\n\\t')
     for line in lines:
         if 'pwr-state' in line:
             state = line.split(':')[-1].strip()
@@ -342,7 +341,6 @@ def main():
                                                             "--to", "0",
                                                             "--give-device-power-status"],
                                                             check=True, stdout=subprocess.PIPE)
-                                print(cecStatus.stdout)
                                 tvStatus = getPowerStateCecCtl(cecStatus.stdout)
                         except OSError as e:
                             recentLogs(str(e))
