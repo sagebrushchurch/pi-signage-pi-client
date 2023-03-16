@@ -110,19 +110,18 @@ def startDisplay(controlFile, signageFile):
                                stdout=subprocess.DEVNULL,
                                stderr=subprocess.STDOUT)
         print("video file")
-
+        
     elif 'audio' in fileType:
         pid = subprocess.Popen(["cvlc",
-                            "--video-wallpaper",
-                            "--no-osd",
-                            "mouse-hide-timeout",
-                            "1",
-                            "-L",
-                            "/tmp/signageFile"],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.STDOUT)
+                                "--video-wallpaper",
+                                "--no-osd",
+                                "mouse-hide-timeout",
+                                "1",
+                                "-L",
+                                "/tmp/signageFile"],
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.STDOUT)
         print("audio file")
-
     else:
         if not controlFile == '':
             pid = subprocess.Popen(["chromium-browser", "--enable-features=WebContentsForceDark",
