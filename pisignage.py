@@ -313,8 +313,7 @@ def main():
                       cecStatus = subprocess.run(["/usr/bin/cec-ctl",
                                                                 "--to", "0",
                                                                 "--give-device-power-status"],
-                                                                check=True, stdout=subprocess.PIPE)
-                      print(cecStatus.stdout)
+                                                                check=True, capture_output=True)
                       tvStatus = getPowerStateCecCtl(cecStatus.stdout)
                 # not all displays support cec, catching unsupported tv error
                 except OSError as e:
@@ -340,7 +339,7 @@ def main():
                                 cecStatus = subprocess.run(["/usr/bin/cec-ctl",
                                                             "--to", "0",
                                                             "--give-device-power-status"],
-                                                            check=True, stdout=subprocess.PIPE)
+                                                            check=True, capture_output=True)
                                 tvStatus = getPowerStateCecCtl(cecStatus.stdout)
                         except OSError as e:
                             recentLogs(str(e))
