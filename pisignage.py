@@ -225,7 +225,9 @@ def main():
         cec.init()
         tv = cec.Device(cec.CECDEVICE_TV)
     elif cecType == 'other':
-        subprocess.Popen("/usr/bin/cec-ctl", "--tv", "-S")
+        subprocess.Popen(["/usr/bin/cec-ctl", "--tv", "-S"],
+                         stdout=subprocess.DEVNULL,
+                         stderr=subprocess.STDOUT)
     clearFiles()
     chromePID = None
     tvStatusFlag = False
