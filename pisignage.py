@@ -311,10 +311,12 @@ def main():
                     if cecType == 'raspi':
                         tvStatus = str(tv.is_on())
                     elif cecType == 'other':
-                      tvStatus = getPowerStateCecCtl(subprocess.run(["/usr/bin/cec-ctl",
+                      cecOutput = subprocess.run(["/usr/bin/cec-ctl",
                                                                 "--to", "0",
                                                                 "--give-device-power-status"],
-                                                                check=True, stdout=subprocess.PIPE))
+                                                                check=True, stdout=subprocess.PIPE)
+                      out, err = cecOutput.communicate()
+                      tvStatus = getPowerStateCecCtl(out)
                 # not all displays support cec, catching unsupported tv error
                 except OSError as e:
                     recentLogs(str(e))
@@ -336,11 +338,12 @@ def main():
                             if cecType == 'raspi':
                                 tvStatus = str(tv.is_on())
                             elif cecType == 'other':
-                                tvStatus = getPowerStateCecCtl(
-                                                subprocess.run(["/usr/bin/cec-ctl",
-                                                                "--to", "0",
-                                                                "--give-device-power-status"],
-                                                                check=True, stdout=subprocess.PIPE))
+                                cecOutput = subprocess.run(["/usr/bin/cec-ctl",
+                                                                            "--to", "0",
+                                                                            "--give-device-power-status"],
+                                                                            check=True, stdout=subprocess.PIPE)
+                                out, err = cecOutput.communicate()
+                                tvStatus = getPowerStateCecCtl(out)
                         except OSError as e:
                             recentLogs(str(e))
                             tvStatus = "UnsupportedTV"
