@@ -311,12 +311,12 @@ def main():
                     if cecType == 'raspi':
                         tvStatus = str(tv.is_on())
                     elif cecType == 'other':
-                      cecOutput = subprocess.run(["/usr/bin/cec-ctl",
+                      cecStatus = subprocess.run(["/usr/bin/cec-ctl",
                                                                 "--to", "0",
                                                                 "--give-device-power-status"],
                                                                 check=True, stdout=subprocess.PIPE)
-                      out, err = cecOutput.communicate()
-                      tvStatus = getPowerStateCecCtl(out)
+                      print(cecStatus.stdout)
+                      tvStatus = getPowerStateCecCtl(cecStatus.stdout)
                 # not all displays support cec, catching unsupported tv error
                 except OSError as e:
                     recentLogs(str(e))
@@ -338,12 +338,12 @@ def main():
                             if cecType == 'raspi':
                                 tvStatus = str(tv.is_on())
                             elif cecType == 'other':
-                                cecOutput = subprocess.run(["/usr/bin/cec-ctl",
+                                cecStatus = subprocess.run(["/usr/bin/cec-ctl",
                                                                             "--to", "0",
                                                                             "--give-device-power-status"],
                                                                             check=True, stdout=subprocess.PIPE)
-                                out, err = cecOutput.communicate()
-                                tvStatus = getPowerStateCecCtl(out)
+                                print(cecStatus.stdout)
+                                tvStatus = getPowerStateCecCtl(cecStatus.stdout)
                         except OSError as e:
                             recentLogs(str(e))
                             tvStatus = "UnsupportedTV"
