@@ -339,9 +339,9 @@ def main():
                                 tvStatus = str(tv.is_on())
                             elif cecType == 'other':
                                 cecStatus = subprocess.run(["/usr/bin/cec-ctl",
-                                                                            "--to", "0",
-                                                                            "--give-device-power-status"],
-                                                                            check=True, stdout=subprocess.PIPE)
+                                                            "--to", "0",
+                                                            "--give-device-power-status"],
+                                                            check=True, stdout=subprocess.PIPE)
                                 print(cecStatus.stdout)
                                 tvStatus = getPowerStateCecCtl(cecStatus.stdout)
                         except OSError as e:
