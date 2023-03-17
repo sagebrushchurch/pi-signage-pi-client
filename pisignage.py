@@ -20,7 +20,7 @@ elif os.path.exists('/dev/cec0'):
     cecType = 'other'
 else:
     cecType = 'none'
-    recentLogs("no cec device found")
+    print("No CEC device detected")
 
 
 
