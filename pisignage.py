@@ -236,9 +236,10 @@ def main():
         loopDelayCounter += 1
 
         recentLogs("TV Power Status: " + tvStatus)
-        # Checks if signageFile exists first then checksums,
+        # Checks if signageFile exists first then checksums.
         # If signageFile doesn't exist: checksum the webpage file,
         # else 0.
+
         # first loop 0 since no files should exist
         if os.path.exists('/tmp/signageFile'):
             hash = md5checksum('/tmp/signageFile')
@@ -255,7 +256,7 @@ def main():
         parameters["tvStatus"] = tvStatus
         parameters["piLogs"] = logList
         parameters["ipAddr"] = ipAddress
-        parameters["ScreenResolution"] = ScreenResolution
+        parameters["ScreenRes"] = ScreenResolution
         parameters["clientVersion"] = PI_CLIENT_VERSION
 
         try:
