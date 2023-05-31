@@ -268,6 +268,8 @@ def main():
             response = httpx.post(
                 f'{BASE_URL}/piConnect', json=params, timeout=None)
             status = response.json()['status']
+            response.raise_for_status()
+            timeSinceLastConnection = 0
             recentLogs(f"Status: {status}")
             # special case "command" keyword, from scriptPath, causes pi to execute command script
             # using flags included in contentPath.
@@ -391,6 +393,12 @@ def main():
             recentLogs("I sleep...")
             # main loop speed control
             time.sleep(30)
+        except httpx.HTTPError as ex:
+            while timeSinceLastConnection < 1440:
+                time.sleep(1)
+                timeSinceLastConnection += 1
+                if timeSinceLastConnection >= 1440:
+                    os.system('sudo reboot')
         except psutil.NoSuchProcess:
             # Sometimes chrome's pid changes, i think its cuz of the redirect for webpage viewing
         # but this catches it and another loop fixes it when it happens, so just loop again quickly
