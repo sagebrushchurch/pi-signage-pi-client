@@ -399,9 +399,9 @@ def main():
 # Exceptions
         except httpx.HTTPError:
             # At each failed response add 1 attempt to the tally
-            # After 480 failed attempts (4 hours), reboot the pi
+            # After 14400 failed seconds (4 hours), reboot the pi
             timeSinceLastConnection += 1
-            if timeSinceLastConnection >= 480:
+            if timeSinceLastConnection >= 14400:
                 os.system('sudo reboot')
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
         except psutil.NoSuchProcess:
