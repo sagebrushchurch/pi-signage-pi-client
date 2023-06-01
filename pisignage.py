@@ -23,9 +23,10 @@ else:
     print("No CEC device detected")
 
 # Global variable for failed attempts to connect to server
+global timeSinceLastConnection
 timeSinceLastConnection = 0
 
-PI_CLIENT_VERSION = '1.5.0b'
+PI_CLIENT_VERSION = '1.5.2'
 # BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
@@ -404,6 +405,7 @@ def main():
             timeSinceLastConnection += 1
             if timeSinceLastConnection >= 48:
                 os.system('sudo reboot')
+            print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
         except psutil.NoSuchProcess:
             # Sometimes chrome's pid changes, I think it's cuz of the redirect for webpage viewing but
             # this catches it and another loop fixes it when it happens, so just loop again quickly
