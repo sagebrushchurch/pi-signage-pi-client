@@ -265,9 +265,6 @@ def main():
             response = httpx.post(
                 f'{BASE_URL}/piConnect', json=parameters, timeout=None)
 
-            # Importing global variable
-            timeSinceLastConnection = 0
-
             # Check for status of 2XX in httpx response
             response.raise_for_status()
 
@@ -421,5 +418,4 @@ def main():
             # This timeout is if server is down or has minor issue, small delay to let it sort out
             time.sleep(15)
 
-if __name__ == '__main__':
-    main()
+main()
