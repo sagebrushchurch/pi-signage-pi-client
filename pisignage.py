@@ -225,6 +225,8 @@ def main():
     loopDelayCounter = 0
     ipAddress = getIP()
     ScreenResolution = getScreenResolution()
+    # Global variable for failed attempts to connect to server
+    timeSinceLastConnection = 0
 
     while True:
         if loopDelayCounter == 5:
@@ -232,8 +234,6 @@ def main():
             ScreenResolution = getScreenResolution()
             loopDelayCounter = 0
         loopDelayCounter += 1
-        # Global variable for failed attempts to connect to server
-        timeSinceLastConnection = 0
 
         recentLogs("TV Power Status: " + tvStatus)
         # Checks if signageFile exists first then checksums.
