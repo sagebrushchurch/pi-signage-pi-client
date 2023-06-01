@@ -22,7 +22,7 @@ else:
     cecType = 'none'
     print("No CEC device detected")
 
-PI_CLIENT_VERSION = '1.5.4'
+PI_CLIENT_VERSION = '1.5.5'
 # BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
@@ -97,7 +97,7 @@ def startDisplay(controlFile, signageFile):
     # Have to set the environment var for the display so chrome knows where to output
     os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
     os.environ['DISPLAY'] = ':0'
-    # Pop open the chrome process so main loop doesn't wait, dump its ouput to null cuz its messy
+    # Pop open the chrome process so main loop doesn't wait, dump its output to null cuz its messy
     try:
         fileType = magic.from_file(
             '/tmp/signageFile', mime=True)
@@ -174,7 +174,10 @@ def recentLogs(logMessage: str):
 
 def getIP():
     ipAddressInfo = subprocess.run(
-        ['hostname', '-I'], stdout=subprocess.PIPE, check=True)
+        ['hostname',
+         '-I'],
+         stdout=subprocess.PIPE,
+         check=True)
     ipAddress = ipAddressInfo.stdout.decode()
 
     return ipAddress
@@ -182,7 +185,11 @@ def getIP():
 def getScreenResolution():
     try:
         screenInfo = subprocess.run(
-            ['xrandr', '--display', ':0'], stdout=subprocess.PIPE, check=True)
+            ['xrandr',
+             '--display',
+             ':0'],
+             stdout=subprocess.PIPE,
+             check=True)
         screenSplit = screenInfo.stdout.decode().split()
         # ScreenResolution = screenSplit[1].replace('"', '')
         ScreenResolution = screenSplit[7] + screenSplit[8] + \
@@ -215,7 +222,9 @@ def main():
         cec.init()
         tv = cec.Device(cec.CECDEVICE_TV)
     elif cecType == 'other':
-        subprocess.Popen(["/usr/bin/cec-ctl", "--tv", "-S"],
+        subprocess.Popen(["/usr/bin/cec-ctl",
+                          "--tv",
+                          "-S"],
                          stdout=subprocess.DEVNULL,
                          stderr=subprocess.STDOUT)
     clearFiles()
@@ -281,21 +290,31 @@ def main():
                     if cecType == 'raspi':
                         tv.standby()
                     elif cecType == 'other':
-                        subprocess.Popen(["/usr/bin/cec-ctl", "--to", "0", "--standby"],
-                                         stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
+                        subprocess.Popen(["/usr/bin/cec-ctl",
+                                          "--to",
+                                          "0",
+                                          "--standby"],
+                                         stdout=subprocess.DEVNULL,
+                                         stderr=subprocess.STDOUT)
 
                 elif commandFlags == 'TurnOnTV':
                     if cecType == 'raspi':
                         tv.power_on()
                     elif cecType == 'other':
-                        subprocess.Popen(["/usr/bin/cec-ctl", "--to", "0", "--image-view-on"],
-                                         stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
+                        subprocess.Popen(["/usr/bin/cec-ctl",
+                                          "--to",
+                                          "0",
+                                          "--image-view-on"],
+                                         stdout=subprocess.DEVNULL,
+                                         stderr=subprocess.STDOUT)
 
                 else:
                     wget.download(commandFile, out='/tmp/commandfile.py')
                     try:
                         subprocess.Popen(
-                            ["/usr/bin/python3", "/tmp/commandfile.py", f"--{commandFlags}"])
+                            ["/usr/bin/python3",
+                             "/tmp/commandfile.py",
+                             f"--{commandFlags}"])
                     # sometimes tvon/off will throw an error cuz cec is a mess, so just in case
                     except subprocess.CalledProcessError as e:
                         recentLogs(str(e))
@@ -311,7 +330,8 @@ def main():
                         tvStatus = str(tv.is_on())
                     elif cecType == 'other':
                       cecStatus = subprocess.run(["/usr/bin/cec-ctl",
-                                                                "--to", "0",
+                                                                "--to",
+                                                                "0",
                                                                 "--give-device-power-status"],
                                                                 check=True, capture_output=True)
                       tvStatus = getPowerStateCecCtl(cecStatus.stdout)
@@ -329,8 +349,12 @@ def main():
                         if cecType == 'raspi':
                             tv.standby()
                         elif cecType == 'other':
-                            subprocess.Popen(["/usr/bin/cec-ctl", "--to", "0", "--standby"],
-                                             stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
+                            subprocess.Popen(["/usr/bin/cec-ctl",
+                                              "--to",
+                                              "0",
+                                              "--standby"],
+                                             stdout=subprocess.DEVNULL,
+                                             stderr=subprocess.STDOUT)
                         tvStatusFlag = False
                         try:
                             if cecType == 'raspi':
@@ -339,7 +363,8 @@ def main():
                                 cecStatus = subprocess.run(["/usr/bin/cec-ctl",
                                                             "--to", "0",
                                                             "--give-device-power-status"],
-                                                            check=True, capture_output=True)
+                                                            check=True,
+                                                            capture_output=True)
                                 tvStatus = getPowerStateCecCtl(cecStatus.stdout)
                         except OSError as e:
                             recentLogs(str(e))
@@ -350,17 +375,23 @@ def main():
                         if cecType == 'raspi':
                             tv.power_on()
                         elif cecType == 'other':
-                            subprocess.Popen(["/usr/bin/cec-ctl", "--to", "0", "--image-view-on"],
-                                             stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
+                            subprocess.Popen(["/usr/bin/cec-ctl",
+                                              "--to",
+                                              "0",
+                                              "--image-view-on"],
+                                             stdout=subprocess.DEVNULL,
+                                             stderr=subprocess.STDOUT)
                         tvStatusFlag = True
                         try:
                             if cecType == 'raspi':
                                 tvStatus = str(tv.is_on())
                             elif cecType =='other':
                                 tvStatus = getPowerStateCecCtl(subprocess.run(["/usr/bin/cec-ctl",
-                                                                "--to", "0",
+                                                                "--to",
+                                                                "0",
                                                                 "--give-device-power-status"],
-                                                                check=True, stdout=subprocess.PIPE))
+                                                                check=True,
+                                                                stdout=subprocess.PIPE))
                         except OSError as e:
                             recentLogs(str(e))
                             tvStatus = "UnsupportedTV"
@@ -383,7 +414,14 @@ def main():
             # Have to set display for screenshot, might be duplicate but it's fine
             os.environ['DISPLAY'] = ':0'
             # Take a screenshot of the display, sets the quality low and makes a thumbnail
-            subprocess.run(["scrot", "-q", "5", "-t", "10", "-o", "-z", f"/tmp/{piName}.png"],
+            subprocess.run(["scrot",
+                            "-q",
+                            "5",
+                            "-t",
+                            "10",
+                            "-o",
+                            "-z",
+                            f"/tmp/{piName}.png"],
                            check=True)
             # Build data object to upload screenshot to server
             data = {'piName': piName}
@@ -391,7 +429,9 @@ def main():
             files = {'file': open(f'/tmp/{piName}-thumb.png', 'rb')}
             # timeout=None so it doesnt timeout for upload
             httpx.post(f'{BASE_URL}/UploadPiScreenshot',
-                       data=data, files=files, timeout=None)
+                       data=data,
+                       files=files,
+                       timeout=None)
             recentLogs("I sleep...")
             # Main loop speed control
             time.sleep(30)
