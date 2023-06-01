@@ -90,6 +90,7 @@ def startDisplay(controlFile, signageFile):
         PID: process object from spawning chrome
     """
     clearFiles()
+    pid = ""
     # Output the files to /tmp so they get purged on reboot
     wget.download(signageFile, out='/tmp/signageFile')
     if not controlFile == '':
