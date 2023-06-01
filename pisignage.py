@@ -66,6 +66,7 @@ def kill(proc_pid):
         proc.kill()
     process.kill()
 
+# Define various pids
 def avPID():
     pid = subprocess.Popen(["cvlc",
                             "--video-wallpaper",
@@ -74,6 +75,16 @@ def avPID():
                             "1",
                             "-L",
                             "/tmp/signageFile"],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.STDOUT)
+    return pid
+
+def otherFilePID():
+    pid = subprocess.Popen(["chromium-browser",
+                            "--enable-features=WebContentsForceDark",
+                            "--kiosk",
+                            "--autoplay-policy=no-user-gesture-required",
+                            "/tmp/controlFile.html"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
     return pid
@@ -107,22 +118,16 @@ def startDisplay(controlFile, signageFile):
         pass
 
     if 'video' in fileType:
-        avPID()
+        pid = avPID()
         print("video file")
 
     elif 'audio' in fileType:
-        avPID()
+        pid = avPID()
         print("audio file")
 
     else:
         if not controlFile == '':
-            pid = subprocess.Popen(["chromium-browser",
-                                    "--enable-features=WebContentsForceDark",
-                                    "--kiosk",
-                                    "--autoplay-policy=no-user-gesture-required",
-                                    "/tmp/controlFile.html"],
-                                   stdout=subprocess.DEVNULL,
-                                   stderr=subprocess.STDOUT)
+            pid = otherFilePID()
         else:
             recentLogs('Control File Missing')
     return pid
