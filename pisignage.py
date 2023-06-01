@@ -22,11 +22,7 @@ else:
     cecType = 'none'
     print("No CEC device detected")
 
-# Global variable for failed attempts to connect to server
-global timeSinceLastConnection
-timeSinceLastConnection = 0
-
-PI_CLIENT_VERSION = '1.5.2'
+PI_CLIENT_VERSION = '1.5.3'
 # BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
@@ -210,6 +206,9 @@ def getPowerStateCecCtl(data):
                 return rawState
     return 'Unknown'
 
+# Global variable for failed attempts to connect to server
+timeSinceLastConnection = 0
+
 def main():
     """pisignage control, pings server to check content schedule, downloading new content when
     updated, downloads control scripts for running media on each update,
@@ -266,7 +265,10 @@ def main():
             # Might need to change to 5 seconds if going too long causes a crash.
             response = httpx.post(
                 f'{BASE_URL}/piConnect', json=parameters, timeout=None)
-            
+
+            # Importing global variable
+            timeSinceLastConnection = 0
+
             # Check for status of 2XX in httpx response
             response.raise_for_status()
 
@@ -401,9 +403,10 @@ def main():
 # Exceptions
         except httpx.HTTPError:
             # At each failed response add 1 attempt to the tally
-            # After 48 failed attempts (4 hours), reboot the pi
+            # After 480 failed attempts (4 hours), reboot the pi
+            timeSinceLastConnection
             timeSinceLastConnection += 1
-            if timeSinceLastConnection >= 48:
+            if timeSinceLastConnection >= 480:
                 os.system('sudo reboot')
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
         except psutil.NoSuchProcess:
