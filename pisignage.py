@@ -445,11 +445,12 @@ def main():
 # Exceptions
         except httpx.HTTPError:
             # At each failed response add 1 attempt to the tally
-            # After 14400 failed seconds (4 hours), reboot the pi
+            # After 480 failed attempts (4 hours), reboot the pi
             timeSinceLastConnection += 1
-            if timeSinceLastConnection >= 14400:
+            if timeSinceLastConnection >= 480:
                 os.system('sudo reboot')
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
+            time.sleep(30)
         except psutil.NoSuchProcess:
             # Sometimes chrome's pid changes, I think it's cuz of the redirect for webpage viewing but
             # this catches it and another loop fixes it when it happens, so just loop again quickly
