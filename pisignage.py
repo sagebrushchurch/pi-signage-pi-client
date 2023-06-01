@@ -206,9 +206,6 @@ def getPowerStateCecCtl(data):
                 return rawState
     return 'Unknown'
 
-# Global variable for failed attempts to connect to server
-timeSinceLastConnection = 0
-
 def main():
     """pisignage control, pings server to check content schedule, downloading new content when
     updated, downloads control scripts for running media on each update,
@@ -228,6 +225,8 @@ def main():
     loopDelayCounter = 0
     ipAddress = getIP()
     ScreenResolution = getScreenResolution()
+    # Global variable for failed attempts to connect to server
+    timeSinceLastConnection = 0
 
     while True:
         if loopDelayCounter == 5:
@@ -404,7 +403,6 @@ def main():
         except httpx.HTTPError:
             # At each failed response add 1 attempt to the tally
             # After 480 failed attempts (4 hours), reboot the pi
-            timeSinceLastConnection
             timeSinceLastConnection += 1
             if timeSinceLastConnection >= 480:
                 os.system('sudo reboot')
