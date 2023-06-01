@@ -22,7 +22,7 @@ else:
     cecType = 'none'
     print("No CEC device detected")
 
-PI_CLIENT_VERSION = '1.5.3'
+PI_CLIENT_VERSION = '1.5.4'
 # BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
@@ -423,4 +423,5 @@ def main():
             # This timeout is if server is down or has minor issue, small delay to let it sort out
             time.sleep(15)
 
-main()
+if __name__ == '__main__':
+    main()
