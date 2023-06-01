@@ -79,6 +79,7 @@ def avPID():
                             "/tmp/signageFile"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
+    return pid
 
 def startDisplay(controlFile, signageFile):
     """Starts chrome running the media content passed by signageFile
@@ -256,7 +257,7 @@ def main():
         parameters["tvStatus"] = tvStatus
         parameters["piLogs"] = logList
         parameters["ipAddr"] = ipAddress
-        parameters["ScreenRes"] = ScreenResolution
+        parameters["screenRes"] = ScreenResolution
         parameters["clientVersion"] = PI_CLIENT_VERSION
 
         try:
