@@ -36,6 +36,15 @@ def clearFiles():
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
 
+def getBrowserVariable():
+    global browser
+    if os.path.exists('/usr/bin/chromium-browser'):
+        browser = 'chromium-browser'
+    elif os.path.exists('/usr/bin/chromium'):
+        browser = 'chromium'
+    elif os.path.exists('/usr/bin/google-chrome'):
+        browser = 'google-chrome'
+
 def md5checksum(fname):
     """checksum function to check media file being played back, sent to server to verify accuracy
 
@@ -80,7 +89,7 @@ def avPID():
     return pid
 
 def otherFilePID():
-    pid = subprocess.Popen(["chromium-browser",
+    pid = subprocess.Popen([browser,
                             "--enable-features=WebContentsForceDark",
                             "--kiosk",
                             "--autoplay-policy=no-user-gesture-required",
@@ -233,6 +242,7 @@ def main():
                          stdout=subprocess.DEVNULL,
                          stderr=subprocess.STDOUT)
     clearFiles()
+    getBrowserVariable()
     chromePID = None
     tvStatusFlag = False
     tvStatus = "False"
