@@ -63,7 +63,6 @@ def md5checksum(fname):
 
     return md5.hexdigest()
 
-
 def kill(proc_pid):
     """Used to stop running process by ID
 
@@ -165,7 +164,6 @@ def startWebDisplay(signageFile):
                             stderr=subprocess.STDOUT)
 
     return pid2
-
 
 def recentLogs(logMessage: str):
     """keeps track of the previous 50 debug messages for sending to server
@@ -337,6 +335,7 @@ def main():
                         recentLogs("probably unsupported TV")
                 recentLogs(commandFlags)
                 recentLogs(commandFile)
+
             # We don't want the pi to update on every loop if content is the same.
             # Checks tv status on each loop for dashboard updates
             elif status == "NoChange":
@@ -355,6 +354,7 @@ def main():
                 except OSError as e:
                     recentLogs(str(e))
                     tvStatus = "UnsupportedTV"
+
             # If not Command or NoChange, this is for actual content updating
             else:
                 # We check for DEFAULT keyword to use as a trigger to turn tv off since
