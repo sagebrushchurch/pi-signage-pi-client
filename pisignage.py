@@ -77,11 +77,11 @@ def kill(proc_pid):
 # Define various pids
 def avPID():
     pid = subprocess.Popen(["cvlc",
-                            "--video-wallpaper",
+                            "--fullscreen",
                             "--no-osd",
                             "mouse-hide-timeout",
                             "1",
-                            "-L",
+                            "--loop",
                             "/tmp/signageFile"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
