@@ -76,15 +76,16 @@ def kill(proc_pid):
 
 # Define various pids
 def avPID():
-    pid = subprocess.Popen(["cvlc",
-                            "--fullscreen",
-                            "--no-osd",
-                            "mouse-hide-timeout",
-                            "1",
-                            "--loop",
-                            "/tmp/signageFile"],
+    pid = subprocess.Popen(["ffplay",
+                            "-i",
+                            "/tmp/signageFile",
+                            "-loop",
+                            "0",
+                            "-fs",
+                            "-fast"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
+
     return pid
 
 def otherFilePID():
