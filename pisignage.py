@@ -22,7 +22,7 @@ else:
     cecType = 'none'
     print("No CEC device detected")
 
-PI_CLIENT_VERSION = '1.5.5'
+PI_CLIENT_VERSION = '1.6.0'
 # BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
@@ -35,6 +35,15 @@ def clearFiles():
         os.remove('/tmp/webPage.html')
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
+
+def getBrowserVariable():
+    global browser
+    if os.path.exists('/usr/bin/chromium-browser'):
+        browser = 'chromium-browser'
+    elif os.path.exists('/usr/bin/chromium'):
+        browser = 'chromium'
+    elif os.path.exists('/usr/bin/google-chrome'):
+        browser = 'google-chrome'
 
 def md5checksum(fname):
     """checksum function to check media file being played back, sent to server to verify accuracy
@@ -54,7 +63,6 @@ def md5checksum(fname):
 
     return md5.hexdigest()
 
-
 def kill(proc_pid):
     """Used to stop running process by ID
 
@@ -68,19 +76,20 @@ def kill(proc_pid):
 
 # Define various pids
 def avPID():
-    pid = subprocess.Popen(["cvlc",
-                            "--video-wallpaper",
-                            "--no-osd",
-                            "mouse-hide-timeout",
-                            "1",
-                            "-L",
-                            "/tmp/signageFile"],
+    pid = subprocess.Popen(["ffplay",
+                            "-i",
+                            "/tmp/signageFile",
+                            "-loop",
+                            "0",
+                            "-fs",
+                            "-fast"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
+
     return pid
 
 def otherFilePID():
-    pid = subprocess.Popen(["chromium-browser",
+    pid = subprocess.Popen([browser,
                             "--enable-features=WebContentsForceDark",
                             "--kiosk",
                             "--autoplay-policy=no-user-gesture-required",
@@ -157,7 +166,6 @@ def startWebDisplay(signageFile):
 
     return pid2
 
-
 def recentLogs(logMessage: str):
     """keeps track of the previous 50 debug messages for sending to server
 
@@ -233,6 +241,7 @@ def main():
                          stdout=subprocess.DEVNULL,
                          stderr=subprocess.STDOUT)
     clearFiles()
+    getBrowserVariable()
     chromePID = None
     tvStatusFlag = False
     tvStatus = "False"
@@ -327,6 +336,7 @@ def main():
                         recentLogs("probably unsupported TV")
                 recentLogs(commandFlags)
                 recentLogs(commandFile)
+
             # We don't want the pi to update on every loop if content is the same.
             # Checks tv status on each loop for dashboard updates
             elif status == "NoChange":
@@ -345,6 +355,7 @@ def main():
                 except OSError as e:
                     recentLogs(str(e))
                     tvStatus = "UnsupportedTV"
+
             # If not Command or NoChange, this is for actual content updating
             else:
                 # We check for DEFAULT keyword to use as a trigger to turn tv off since
