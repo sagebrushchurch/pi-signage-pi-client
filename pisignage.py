@@ -22,7 +22,7 @@ else:
     cecType = 'none'
     print("No CEC device detected")
 
-PI_CLIENT_VERSION = '1.5.5'
+PI_CLIENT_VERSION = '1.6.0'
 # BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 logList = []
