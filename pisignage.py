@@ -162,7 +162,7 @@ def startWebDisplay(signageFile):
     os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
     os.environ['DISPLAY'] = ':0'
     # Pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
-    pid2 = subprocess.Popen(["chromium-browser",
+    pid2 = subprocess.Popen([browser,
                              "--kiosk",
                              "--autoplay-policy=no-user-gesture-required",
                              "/tmp/webPage.html"],
