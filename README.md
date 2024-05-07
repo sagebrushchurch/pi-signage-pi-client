@@ -8,3 +8,5 @@ Need to pip3 install httpx, cec, wget
 Looks like it needs python3.8+ and httpx wont install on debian stretch
 
 HiGole1 minipc wifi https://github.com/lwfinger/rtw89
+
+test
