@@ -292,7 +292,7 @@ def main():
             # timeout=None cuz in some cases the posts would time out.
             # Might need to change to 5 seconds if going too long causes a crash.
             response = httpx.post(
-                f'{BASE_URL}/piConnect', json=parameters, timeout=None)
+                f'{BASE_URL}/piConnect', json=parameters, timeout=5)
 
             # Check for status of 2XX in httpx response
             response.raise_for_status()
