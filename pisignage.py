@@ -32,7 +32,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '1.6.6'
+PI_CLIENT_VERSION = '1.6.7'
 
 logList = []
 
