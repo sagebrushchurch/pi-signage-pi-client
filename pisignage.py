@@ -227,7 +227,7 @@ def getScreenResolution():
             # ScreenResolution = screenSplit[1].replace('"', '')
             ScreenResolution = screenSplit[7] + screenSplit[8] + \
                 screenSplit[9].replace(',', '')
-        elif 'wayland' in os.getenv('WAYLAND_DISPLAY'):
+        elif 'wayland' in os.getenv('XDG_SESSION_TYPE'):
             ScreenResolution = getWaylandResolution()
         else:
             ScreenResolution = "Cannot read resolution information"
