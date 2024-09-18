@@ -216,7 +216,8 @@ def getWaylandResolution():
 
 def getScreenResolution():
     try:
-        if 'x11' in os.getenv('XDG_SESSION_TYPE'):
+        sessionType = os.environ['XDG_SESSION_TYPE'].lower()
+        if sessionType == 'x11':
             screenInfo = subprocess.run(
                 ['xrandr',
                 '--display',
@@ -227,10 +228,10 @@ def getScreenResolution():
             # ScreenResolution = screenSplit[1].replace('"', '')
             ScreenResolution = screenSplit[7] + screenSplit[8] + \
                 screenSplit[9].replace(',', '')
-        elif 'wayland' in os.getenv('XDG_SESSION_TYPE'):
+        elif sessionType == 'wayland':
             ScreenResolution = getWaylandResolution()
         else:
-            ScreenResolution = "Cannot read resolution information"
+            ScreenResolution = "Cannot get Display Environment"
     except subprocess.CalledProcessError:
         ScreenResolution = "No Screen Attached"
 
