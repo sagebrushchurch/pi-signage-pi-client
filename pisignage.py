@@ -28,7 +28,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '1.6.3'
+PI_CLIENT_VERSION = '1.6.4'
 
 logList = []
 
@@ -428,7 +428,7 @@ def main():
                 else:
                     chromePID = startDisplay(controlFile, signageFile)
             # Take a screenshot of the display, sets the quality low and makes a thumbnail
-            subprocess.run(["gnome-screenshot", f"/tmp/{piName}.png"], check=True)
+            subprocess.run(["gnome-screenshot", "-f", f"/tmp/{piName}.png"], check=True)
             # Build data object to upload screenshot to server
             data = {'piName': piName}
             files = {'file': open(f'/tmp/{piName}.png', 'rb')}
