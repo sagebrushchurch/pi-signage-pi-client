@@ -3,15 +3,19 @@ Sends name and checksum to server and
 server returns what content the pi should be displaying
 """
 from traceback import print_exc
-import os
-import hashlib
 import subprocess
-import time
 import datetime
+import hashlib
 import psutil
 import httpx
-import wget
 import magic
+import time
+import wget
+import gi
+import os
+
+gi.require_version('Gdk', '3.0')
+from gi.repository import Gdk
 
 if os.path.exists('/dev/vchiq'):
     import cec
@@ -28,7 +32,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '1.6.4'
+PI_CLIENT_VERSION = '1.6.5'
 
 logList = []
 
@@ -194,18 +198,39 @@ def getIP():
 
     return ipAddress
 
+def getWaylandResolution():
+    display = Gdk.Display.get_default()
+    if display is None:
+        return "No display found"
+
+    monitor = display.get_primary_monitor()
+    if monitor is None:
+        return "No primary monitor found"
+
+    geometry = monitor.get_geometry()
+
+    raw_width = geometry.width
+    raw_height = geometry.height
+
+    return f"{raw_width} x {raw_height}"
+
 def getScreenResolution():
     try:
-        screenInfo = subprocess.run(
-            ['xrandr',
-             '--display',
-             ':0'],
-             stdout=subprocess.PIPE,
-             check=True)
-        screenSplit = screenInfo.stdout.decode().split()
-        # ScreenResolution = screenSplit[1].replace('"', '')
-        ScreenResolution = screenSplit[7] + screenSplit[8] + \
-            screenSplit[9].replace(',', '')
+        if 'x11' in os.getenv("XDG_SESSION_TYPE").lower:
+            screenInfo = subprocess.run(
+                ['xrandr',
+                '--display',
+                ':0'],
+                stdout=subprocess.PIPE,
+                check=True)
+            screenSplit = screenInfo.stdout.decode().split()
+            # ScreenResolution = screenSplit[1].replace('"', '')
+            ScreenResolution = screenSplit[7] + screenSplit[8] + \
+                screenSplit[9].replace(',', '')
+        elif 'wayland' in os.getenv("WAYLAND_DISPLAY").lower:
+            ScreenResolution = getWaylandResolution()
+        else:
+            ScreenResolution = "Cannot read resolution information"
     except subprocess.CalledProcessError:
         ScreenResolution = "No Screen Attached"
 
