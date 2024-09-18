@@ -119,9 +119,6 @@ def startDisplay(controlFile, signageFile):
     wget.download(signageFile, out='/tmp/signageFile')
     if not controlFile == '':
         wget.download(controlFile, out='/tmp/controlFile.html')
-    # Have to set the environment var for the display so chrome knows where to output
-    os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
-    os.environ['DISPLAY'] = ':0'
     # Pop open the chrome process so main loop doesn't wait, dump its output to null cuz its messy
     try:
         fileType = magic.from_file(
@@ -158,9 +155,6 @@ def startWebDisplay(signageFile):
     clearFiles()
     # Output the file to /tmp so it would get purged on a reboot
     wget.download(signageFile, out='/tmp/webPage.html')
-    # Have to set the environment var for the display so chrome knows where to output
-    os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
-    os.environ['DISPLAY'] = ':0'
     # Pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     pid2 = subprocess.Popen([browser,
                              "--kiosk",
@@ -433,22 +427,11 @@ def main():
                     chromePID = startWebDisplay(signageFile)
                 else:
                     chromePID = startDisplay(controlFile, signageFile)
-            # Have to set display for screenshot, might be duplicate but it's fine
-            os.environ['DISPLAY'] = ':0'
             # Take a screenshot of the display, sets the quality low and makes a thumbnail
-            subprocess.run(["scrot",
-                            "-q",
-                            "5",
-                            "-t",
-                            "10",
-                            "-o",
-                            "-z",
-                            f"/tmp/{piName}.png"],
-                           check=True)
+            subprocess.run(["gnome-screenshot", f"/tmp/{piName}.png"], check=True)
             # Build data object to upload screenshot to server
             data = {'piName': piName}
-            # upload -thumb file so its smol
-            files = {'file': open(f'/tmp/{piName}-thumb.png', 'rb')}
+            files = {'file': open(f'/tmp/{piName}.png', 'rb')}
             # timeout=None so it doesnt timeout for upload
             httpx.post(f'{BASE_URL}/UploadPiScreenshot',
                        data=data,
