@@ -48,10 +48,10 @@ def clearFiles():
 
 def getBrowserVariable():
     global browser
-    if os.path.exists('/usr/bin/chromium-browser'):
-        browser = 'chromium-browser'
-    elif os.path.exists('/usr/bin/chromium'):
+    if os.path.exists('/usr/bin/chromium'):
         browser = 'chromium'
+    elif os.path.exists('/usr/bin/chromium-browser'):
+        browser = 'chromium-browser'
     elif os.path.exists('/usr/bin/google-chrome'):
         browser = 'google-chrome'
 
