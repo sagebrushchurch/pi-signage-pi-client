@@ -35,6 +35,7 @@ else:
 PI_CLIENT_VERSION = '1.6.7'
 
 logList = []
+sessionType = ""
 
 def clearFiles():
     """clears all temp files used for playback, ensures nothing is re-used"""
@@ -214,10 +215,14 @@ def getWaylandResolution():
 
     return f"{raw_width} x {raw_height}"
 
+def getSessionType():
+    sessionType = os.environ['XDG_SESISON_TYPE'].lower()
+
+    return sessionType
+
 def getScreenResolution():
     try:
-        sessionType = os.environ['XDG_SESSION_TYPE'].lower()
-        if sessionType == 'x11':
+        if getSessionType() == 'x11':
             screenInfo = subprocess.run(
                 ['xrandr',
                 '--display',
@@ -228,7 +233,7 @@ def getScreenResolution():
             # ScreenResolution = screenSplit[1].replace('"', '')
             ScreenResolution = screenSplit[7] + screenSplit[8] + \
                 screenSplit[9].replace(',', '')
-        elif sessionType == 'wayland':
+        elif getSessionType() == 'wayland':
             ScreenResolution = getWaylandResolution()
         else:
             ScreenResolution = "Cannot get Display Environment"
@@ -453,8 +458,22 @@ def main():
                     chromePID = startWebDisplay(signageFile)
                 else:
                     chromePID = startDisplay(controlFile, signageFile)
-            # Take a screenshot of the display, sets the quality low and makes a thumbnail
-            subprocess.run(["gnome-screenshot", "-f", f"/tmp/{piName}.png"], check=True)
+            # Take a screenshot of the display
+            if getSessionType() == "x11":
+                subprocess.run(["scrot",
+                                "-q",
+                                "5",
+                                "-t",
+                                "10",
+                                "-o",
+                                "-z",
+                                f"/tmp/{piName}.png"],
+                                check=True)
+            elif getSessionType() == "wayland":
+                subprocess.run(["./home/pi/gnome-screenshot/build/src/gnome-screenshot",
+                                "--file",
+                                f"/tmp/{piName}.png"],
+                                check=True)
             # Build data object to upload screenshot to server
             data = {'piName': piName}
             files = {'file': open(f'/tmp/{piName}.png', 'rb')}
