@@ -470,7 +470,7 @@ def main():
                                 f"/tmp/{piName}.png"],
                                 check=True)
             elif getSessionType() == "wayland":
-                subprocess.run(["./home/pi/gnome-screenshot/build/src/gnome-screenshot",
+                subprocess.run(["/home/pi/gnome-screenshot/build/src/gnome-screenshot",
                                 "--file",
                                 f"/tmp/{piName}.png"],
                                 check=True)
