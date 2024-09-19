@@ -216,7 +216,7 @@ def getWaylandResolution():
     return f"{raw_width} x {raw_height}"
 
 def getSessionType():
-    sessionType = os.environ['XDG_SESISON_TYPE'].lower()
+    sessionType = os.environ['XDG_SESSION_TYPE'].lower()
 
     return sessionType
 
