@@ -101,12 +101,21 @@ def avPID():
     return pid
 
 def otherFilePID():
-    pid = subprocess.Popen([browser,
-                            "-e",
-                            "Fullscreen",
-                            "/tmp/controlFile.html"],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.STDOUT)
+    if browser == 'midori':
+        pid = subprocess.Popen([browser,
+                                "-e",
+                                "Fullscreen",
+                                "/tmp/controlFile.html"],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.STDOUT)
+    else:
+        pid = subprocess.Popen([browser,
+                                "--enable-features=WebContentsForceDark",
+                                "--kiosk",
+                                "--autoplay-policy=no-user-gesture-required",
+                                "/tmp/controlFile.html"],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.STDOUT)
     return pid
 
 def startDisplay(controlFile, signageFile):
@@ -162,12 +171,22 @@ def startWebDisplay(signageFile):
     # Output the file to /tmp so it would get purged on a reboot
     wget.download(signageFile, out='/tmp/webPage.html')
     # Pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
-    pid2 = subprocess.Popen([browser,
-                             "-e",
-                             "Fullscreen",
-                             "/tmp/webPage.html"],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.STDOUT)
+    if browser == 'midori':
+
+        pid2 = subprocess.Popen([browser,
+                                "-e",
+                                "Fullscreen",
+                                "/tmp/webPage.html"],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.STDOUT)
+    else:
+
+        pid2 = subprocess.Popen([browser,
+                                "--kiosk",
+                                "--autoplay-policy=no-user-gesture-required",
+                                "/tmp/webPage.html"],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.STDOUT)
 
     return pid2
 
