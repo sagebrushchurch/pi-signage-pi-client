@@ -3,15 +3,19 @@ Sends name and checksum to server and
 server returns what content the pi should be displaying
 """
 from traceback import print_exc
-import os
-import hashlib
 import subprocess
-import time
 import datetime
+import hashlib
 import psutil
 import httpx
-import wget
 import magic
+import time
+import wget
+import gi
+import os
+
+gi.require_version('Gdk', '3.0')
+from gi.repository import Gdk
 
 if os.path.exists('/dev/vchiq'):
     import cec
@@ -28,9 +32,10 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '1.6.2'
+PI_CLIENT_VERSION = '1.6.7'
 
 logList = []
+sessionType = ""
 
 def clearFiles():
     """clears all temp files used for playback, ensures nothing is re-used"""
@@ -43,10 +48,10 @@ def clearFiles():
 
 def getBrowserVariable():
     global browser
-    if os.path.exists('/usr/bin/chromium-browser'):
-        browser = 'chromium-browser'
-    elif os.path.exists('/usr/bin/chromium'):
+    if os.path.exists('/usr/bin/chromium'):
         browser = 'chromium'
+    elif os.path.exists('/usr/bin/chromium-browser'):
+        browser = 'chromium-browser'
     elif os.path.exists('/usr/bin/google-chrome'):
         browser = 'google-chrome'
 
@@ -119,9 +124,6 @@ def startDisplay(controlFile, signageFile):
     wget.download(signageFile, out='/tmp/signageFile')
     if not controlFile == '':
         wget.download(controlFile, out='/tmp/controlFile.html')
-    # Have to set the environment var for the display so chrome knows where to output
-    os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
-    os.environ['DISPLAY'] = ':0'
     # Pop open the chrome process so main loop doesn't wait, dump its output to null cuz its messy
     try:
         fileType = magic.from_file(
@@ -158,9 +160,6 @@ def startWebDisplay(signageFile):
     clearFiles()
     # Output the file to /tmp so it would get purged on a reboot
     wget.download(signageFile, out='/tmp/webPage.html')
-    # Have to set the environment var for the display so chrome knows where to output
-    os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
-    os.environ['DISPLAY'] = ':0'
     # Pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     pid2 = subprocess.Popen([browser,
                              "--kiosk",
@@ -200,18 +199,44 @@ def getIP():
 
     return ipAddress
 
+def getWaylandResolution():
+    display = Gdk.Display.get_default()
+    if display is None:
+        return "No display found"
+
+    monitor = display.get_primary_monitor()
+    if monitor is None:
+        return "No primary monitor found"
+
+    geometry = monitor.get_geometry()
+
+    raw_width = geometry.width
+    raw_height = geometry.height
+
+    return f"{raw_width} x {raw_height}"
+
+def getSessionType():
+    sessionType = os.environ['XDG_SESSION_TYPE'].lower()
+
+    return sessionType
+
 def getScreenResolution():
     try:
-        screenInfo = subprocess.run(
-            ['xrandr',
-             '--display',
-             ':0'],
-             stdout=subprocess.PIPE,
-             check=True)
-        screenSplit = screenInfo.stdout.decode().split()
-        # ScreenResolution = screenSplit[1].replace('"', '')
-        ScreenResolution = screenSplit[7] + screenSplit[8] + \
-            screenSplit[9].replace(',', '')
+        if getSessionType() == 'x11':
+            screenInfo = subprocess.run(
+                ['xrandr',
+                '--display',
+                ':0'],
+                stdout=subprocess.PIPE,
+                check=True)
+            screenSplit = screenInfo.stdout.decode().split()
+            # ScreenResolution = screenSplit[1].replace('"', '')
+            ScreenResolution = screenSplit[7] + screenSplit[8] + \
+                screenSplit[9].replace(',', '')
+        elif getSessionType() == 'wayland':
+            ScreenResolution = getWaylandResolution()
+        else:
+            ScreenResolution = "Cannot get Display Environment"
     except subprocess.CalledProcessError:
         ScreenResolution = "No Screen Attached"
 
@@ -292,7 +317,7 @@ def main():
             # timeout=None cuz in some cases the posts would time out.
             # Might need to change to 5 seconds if going too long causes a crash.
             response = httpx.post(
-                f'{BASE_URL}/piConnect', json=parameters, timeout=None)
+                f'{BASE_URL}/piConnect', json=parameters, timeout=5)
 
             # Check for status of 2XX in httpx response
             response.raise_for_status()
@@ -433,22 +458,25 @@ def main():
                     chromePID = startWebDisplay(signageFile)
                 else:
                     chromePID = startDisplay(controlFile, signageFile)
-            # Have to set display for screenshot, might be duplicate but it's fine
-            os.environ['DISPLAY'] = ':0'
-            # Take a screenshot of the display, sets the quality low and makes a thumbnail
-            subprocess.run(["scrot",
-                            "-q",
-                            "5",
-                            "-t",
-                            "10",
-                            "-o",
-                            "-z",
-                            f"/tmp/{piName}.png"],
-                           check=True)
+            # Take a screenshot of the display
+            if getSessionType() == "x11":
+                subprocess.run(["scrot",
+                                "-q",
+                                "5",
+                                "-t",
+                                "10",
+                                "-o",
+                                "-z",
+                                f"/tmp/{piName}.png"],
+                                check=True)
+            elif getSessionType() == "wayland":
+                subprocess.run(["/home/pi/gnome-screenshot/build/src/gnome-screenshot",
+                                "--file",
+                                f"/tmp/{piName}.png"],
+                                check=True)
             # Build data object to upload screenshot to server
             data = {'piName': piName}
-            # upload -thumb file so its smol
-            files = {'file': open(f'/tmp/{piName}-thumb.png', 'rb')}
+            files = {'file': open(f'/tmp/{piName}.png', 'rb')}
             # timeout=None so it doesnt timeout for upload
             httpx.post(f'{BASE_URL}/UploadPiScreenshot',
                        data=data,
