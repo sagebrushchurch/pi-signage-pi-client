@@ -482,7 +482,7 @@ def main():
             httpx.post(f'{BASE_URL}/UploadPiScreenshot',
                        data=data,
                        files=files,
-                       timeout=None)
+                       timeout=30)
             recentLogs("I sleep...")
             # Main loop speed control
             time.sleep(30)
