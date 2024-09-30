@@ -54,8 +54,8 @@ def getBrowserVariable():
         browser = 'chromium-browser'
     elif os.path.exists('/usr/bin/google-chrome'):
         browser = 'google-chrome'
-    elif os.path.exists('/usr/bin/midory'):
-        broswer = 'midori'
+    elif os.path.exists('/usr/bin/midori'):
+        browser = 'midori'
 
 def md5checksum(fname):
     """checksum function to check media file being played back, sent to server to verify accuracy
