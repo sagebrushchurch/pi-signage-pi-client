@@ -54,6 +54,8 @@ def getBrowserVariable():
         browser = 'chromium-browser'
     elif os.path.exists('/usr/bin/google-chrome'):
         browser = 'google-chrome'
+    elif os.path.exists('/usr/bin/midory'):
+        broswer = 'midori'
 
 def md5checksum(fname):
     """checksum function to check media file being played back, sent to server to verify accuracy
@@ -100,9 +102,8 @@ def avPID():
 
 def otherFilePID():
     pid = subprocess.Popen([browser,
-                            "--enable-features=WebContentsForceDark",
-                            "--kiosk",
-                            "--autoplay-policy=no-user-gesture-required",
+                            "-e",
+                            "Fullscreen",
                             "/tmp/controlFile.html"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
@@ -162,9 +163,9 @@ def startWebDisplay(signageFile):
     wget.download(signageFile, out='/tmp/webPage.html')
     # Pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     pid2 = subprocess.Popen([browser,
-                             "--kiosk",
-                             "--autoplay-policy=no-user-gesture-required",
-                             "/tmp/webPage.html"],
+                            "-e",
+                            "Fullscreen",
+                            "/tmp/controlFile.html"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
 
