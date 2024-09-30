@@ -163,9 +163,9 @@ def startWebDisplay(signageFile):
     wget.download(signageFile, out='/tmp/webPage.html')
     # Pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
     pid2 = subprocess.Popen([browser,
-                            "-e",
-                            "Fullscreen",
-                            "/tmp/controlFile.html"],
+                             "-e",
+                             "Fullscreen",
+                             "/tmp/webPage.html"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
 
