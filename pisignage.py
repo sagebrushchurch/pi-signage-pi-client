@@ -54,8 +54,8 @@ def getBrowserVariable():
         browser = 'chromium-browser'
     elif os.path.exists('/usr/bin/google-chrome'):
         browser = 'google-chrome'
-    elif os.path.exists('/usr/bin/midori'):
-        browser = 'midori'
+    elif os.path.exists('/usr/bin/firefox'):
+        browser = 'firefox'
 
 def md5checksum(fname):
     """checksum function to check media file being played back, sent to server to verify accuracy
@@ -101,10 +101,9 @@ def avPID():
     return pid
 
 def otherFilePID():
-    if browser == 'midori':
+    if browser == 'firefox':
         pid = subprocess.Popen([browser,
-                                "-e",
-                                "Fullscreen",
+                                "--kiosk",
                                 "/tmp/controlFile.html"],
                                 stdout=subprocess.DEVNULL,
                                 stderr=subprocess.STDOUT)
