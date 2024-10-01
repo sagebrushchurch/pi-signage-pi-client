@@ -170,11 +170,10 @@ def startWebDisplay(signageFile):
     # Output the file to /tmp so it would get purged on a reboot
     wget.download(signageFile, out='/tmp/webPage.html')
     # Pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
-    if browser == 'midori':
+    if browser == 'firefox':
 
         pid2 = subprocess.Popen([browser,
-                                "-e",
-                                "Fullscreen",
+                                "--kiosk",
                                 "/tmp/webPage.html"],
                                 stdout=subprocess.DEVNULL,
                                 stderr=subprocess.STDOUT)
