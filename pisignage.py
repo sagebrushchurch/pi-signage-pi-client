@@ -32,8 +32,8 @@ def clearFiles():
     """clears all temp files used for playback, ensures nothing is re-used"""
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
-    if os.path.exists('/tmp/webPage.html'):
-        os.remove('/tmp/webPage.html')
+    # if os.path.exists('/tmp/webPage.html'):
+    #     os.remove('/tmp/webPage.html')
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
 
@@ -88,10 +88,16 @@ def avPID():
                             stderr=subprocess.STDOUT)
     return pid
 
+def linkPID():
+    pid = subprocess.Popen([browser,
+                            "/tmp/signageFile"],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.STDOUT)
+
 def otherFilePID():
     pid = subprocess.Popen([browser,
                             browser_flags,
-                            "/tmp/signageFile.html"],
+                            "/tmp/signageFile"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
     return pid
@@ -122,10 +128,14 @@ def startDisplay(controlFile, signageFile):
     # Probably a video or audio file
     if 'video' or 'audio' in fileType:
         pid = avPID()
-
+    
     # Probably a webpage
+    elif 'html' in fileType:
+        pid = linkPID()
+
+    # Probably something broke
     else:
-        if not controlFile == '':
+        if controlFile == '':
             pid = otherFilePID()
         else:
             recentLogs('Control File Missing')
@@ -210,8 +220,6 @@ def main():
             ScreenResolution = getScreenResolution()
             loopDelayCounter = 0
         loopDelayCounter += 1
-
-        recentLogs("TV Power Status: " + tvStatus)
         # Checks if signageFile exists first then checksums.
         # If signageFile doesn't exist: checksum the webpage file,
         # else 0.
