@@ -18,10 +18,10 @@ gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk
 
 PI_NAME = os.uname()[1]
-if '-dev-' in PI_NAME.lower():
-    BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
-else:
-    BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
+# if '-dev-' in PI_NAME.lower():
+BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
+# else:
+#     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
 PI_CLIENT_VERSION = '2.0'
 
@@ -93,6 +93,7 @@ def linkPID():
                             "/tmp/signageFile"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
+    return pid
 
 def otherFilePID():
     pid = subprocess.Popen([browser,
@@ -121,26 +122,25 @@ def startDisplay(controlFile, signageFile):
         fileType = magic.from_file(
             '/tmp/signageFile', mime=True)
         print(fileType)
-    except:
-        recentLogs("failed to read file type")
-        pass
 
-    # Probably a video or audio file
-    if 'video' or 'audio' in fileType:
-        pid = avPID()
-    
-    # Probably a webpage
-    elif 'html' in fileType:
-        pid = linkPID()
+        # Probably a video or audio file
+        if 'video' or 'audio' in fileType:
+            pid = avPID()
+        
+        # Probably a webpage
+        elif 'text' or 'html' in fileType:
+            pid = linkPID()
 
     # Probably something broke
-    else:
-        if controlFile == '':
-            pid = otherFilePID()
         else:
-            recentLogs('Control File Missing')
+            if controlFile == '':
+                pid = otherFilePID()
 
-    return pid
+        return pid
+
+    except:
+        recentLogs("Could not access signageFile")
+        pass
 
     # Keep here but commented in case things break.
     # wget.download(signageFile, out='/tmp/webPage.html')
