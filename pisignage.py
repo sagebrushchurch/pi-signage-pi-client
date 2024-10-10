@@ -18,12 +18,15 @@ gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk
 
 PI_NAME = os.uname()[1]
-# if '-dev-' in PI_NAME.lower():
-BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
-# else:
-#     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
+if '-dev-' in PI_NAME.lower():
+    BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
+else:
+        BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
 PI_CLIENT_VERSION = '2.0'
+
+browser = 'firefox'
+browser_flags = '--kiosk'
 
 logList = []
 sessionType = ""
@@ -36,15 +39,7 @@ def clearFiles():
     #     os.remove('/tmp/webPage.html')
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
-
-def getBrowserVariable():
-    global browser
-    global browser_flags
-    if os.path.exists('/usr/bin/firefox'):
-        browser = 'firefox'
-        browser_flags = '--kiosk'
-    else:
-        recentLogs("Browser not found, please install firefox.")
+    recentLogs("Clearing files...")
 
 def md5checksum(fname):
     """checksum function to check media file being played back, sent to server to verify accuracy
@@ -86,13 +81,16 @@ def avPID():
                             "-fast"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
+    recentLogs("Launching ffmpeg for audio/video file.")
     return pid
 
 def linkPID():
     pid = subprocess.Popen([browser,
+                            browser_flags,
                             "/tmp/signageFile"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
+    recentLogs("Webpage detected. Launching Firefox.")
     return pid
 
 def otherFilePID():
@@ -101,6 +99,7 @@ def otherFilePID():
                             "/tmp/signageFile"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
+    recentLogs("Undetermined file type. Attempting to launch in Firefox.")
     return pid
 
 def startDisplay(controlFile, signageFile):
@@ -114,21 +113,22 @@ def startDisplay(controlFile, signageFile):
     Returns:
         PID: process object from spawning firefox
     """
-
+    recentLogs("Downloading Signage File")
     wget.download(signageFile, out='/tmp/signageFile')
     if not controlFile == '':
+        recentLogs("Downloading Control File.")
         wget.download(controlFile, out='/tmp/controlFile.html')
     try:
         fileType = magic.from_file(
             '/tmp/signageFile', mime=True)
-        print(fileType)
+        recentLogs(f"File type '{fileType}' detected.")
 
         # Probably a video or audio file
         if 'video' or 'audio' in fileType:
             pid = avPID()
-        
+
         # Probably a webpage
-        elif 'text' or 'html' in fileType:
+        elif 'html' in fileType:
             pid = linkPID()
 
     # Probably something broke
@@ -201,7 +201,6 @@ def main():
     """
 
     clearFiles()
-    getBrowserVariable()
     browserPID = None
     tvStatus = "False"
     loopDelayCounter = 0
@@ -221,14 +220,11 @@ def main():
             loopDelayCounter = 0
         loopDelayCounter += 1
         # Checks if signageFile exists first then checksums.
-        # If signageFile doesn't exist: checksum the webpage file,
         # else 0.
 
         # first loop 0 since no files should exist
         if os.path.exists('/tmp/signageFile'):
             hash = md5checksum('/tmp/signageFile')
-        elif os.path.exists('/tmp/webPage.html'):
-            hash = md5checksum('/tmp/webPage.html')
         else:
             hash = 0
 
