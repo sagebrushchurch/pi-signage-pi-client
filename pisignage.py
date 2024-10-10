@@ -27,7 +27,6 @@ PI_CLIENT_VERSION = '2.0'
 
 browser = 'firefox'
 browser_flags = '--kiosk'
-
 logList = []
 sessionType = ""
 
@@ -35,8 +34,6 @@ def clearFiles():
     """clears all temp files used for playback, ensures nothing is re-used"""
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
-    # if os.path.exists('/tmp/webPage.html'):
-    #     os.remove('/tmp/webPage.html')
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
     recentLogs("Clearing files...")
@@ -124,12 +121,15 @@ def startDisplay(controlFile, signageFile):
         recentLogs(f"File type '{fileType}' detected.")
 
         # Probably a video or audio file
-        if 'video' or 'audio' in fileType:
+        if 'video' in fileType or 'audio' in fileType:
             pid = avPID()
 
         # Probably a webpage
         elif 'html' in fileType:
             pid = linkPID()
+
+        elif 'image' in fileType:
+            pid = otherFilePID()
 
     # Probably something broke
         else:
@@ -141,13 +141,6 @@ def startDisplay(controlFile, signageFile):
     except:
         recentLogs("Could not access signageFile")
         pass
-
-    # Keep here but commented in case things break.
-    # wget.download(signageFile, out='/tmp/webPage.html')
-    # pid2 = subprocess.Popen([browser,
-    #                          "/tmp/webPage.html"],
-    #                         stdout=subprocess.DEVNULL,
-    #                         stderr=subprocess.STDOUT)
 
 def recentLogs(logMessage: str):
     """keeps track of the previous 50 debug messages for sending to server
