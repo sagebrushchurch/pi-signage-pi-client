@@ -25,6 +25,8 @@ else:
 
 PI_CLIENT_VERSION = '2.0'
 
+DEVICE_MODEL = os.environ['DEVICE_MODEL']
+
 browser = 'firefox'
 browser_flags = '--kiosk'
 logList = []
@@ -34,9 +36,9 @@ def clearFiles():
     """clears all temp files used for playback, ensures nothing is re-used"""
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
+        recentLogs("Clearing files...")
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
-    recentLogs("Clearing files...")
 
 def md5checksum(fname):
     """checksum function to check media file being played back, sent to server to verify accuracy
@@ -118,7 +120,7 @@ def startDisplay(controlFile, signageFile):
     try:
         fileType = magic.from_file(
             '/tmp/signageFile', mime=True)
-        recentLogs(f"File type '{fileType}' detected.")
+        # recentLogs(f"File type '{fileType}' detected.") # For Debugging
 
         # Probably a video or audio file
         if 'video' in fileType or 'audio' in fileType:
@@ -187,21 +189,48 @@ def getScreenResolution():
 
     return f"{raw_width} x {raw_height}"
 
+def getLoadAverages():
+    """gets the load averages from /proc/loadavg"""
+
+    loadAvgFull = subprocess.run([
+        'cat',
+        '/proc/loadavg',
+        ], stdout=subprocess.PIPE,
+    )
+
+    loadAvg = loadAvgFull.stdout.decode()
+
+    return loadAvg
+
+def getUptime():
+    """gets the uptime from /proc/uptime"""
+
+    uptimeFull = subprocess.run([
+        'cat',
+        '/proc/uptime',
+    ], stdout=subprocess.PIPE,
+    )
+
+    uptime = uptimeFull.stdout.decode()
+
+    return uptime
+
 def main():
     """pisignage control, pings server to check content schedule, downloading new content when
     updated, downloads control scripts for running media on each update,
     uploads screenshot to server for dashboard monitoring.
     """
 
+    recentLogs("Service Starting...")
+
     clearFiles()
+    uptime = getUptime()
     browserPID = None
-    tvStatus = "False"
-    loopDelayCounter = 0
     ipAddress = getIP()
+    loadAvg = getLoadAverages()
+    loopDelayCounter = 0
     ScreenResolution = getScreenResolution()
-    # Global variable for failed attempts to connect to server
     timeSinceLastConnection = 0
-    pid = ""
 
     os.environ['WAYLAND_DISPLAY'] = os.environ.get('WAYLAND_DISPLAY', 'wayland-1')
     os.environ['XDG_RUNTIME_DIR'] = os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}')
@@ -224,11 +253,13 @@ def main():
         # Build data parameters for server post request
         parameters = {}
         piName = os.uname()[1]
-        parameters["name"] = piName
         parameters["hash"] = hash
-        parameters["tvStatus"] = tvStatus
-        parameters["piLogs"] = logList
+        parameters["load"] = loadAvg
+        parameters["name"] = piName
         parameters["ipAddr"] = ipAddress
+        parameters["piLogs"] = logList
+        parameters["uptime"] = uptime
+        parameters["hardware"] = DEVICE_MODEL
         parameters["screenRes"] = ScreenResolution
         parameters["clientVersion"] = PI_CLIENT_VERSION
 
@@ -253,9 +284,8 @@ def main():
                 recentLogs(commandFile)
 
             # We don't want the pi to update on every loop if content is the same.
-            # Checks tv status on each loop for dashboard updates
             elif status == "NoChange":
-                recentLogs("I am sentient!")
+                recentLogs("No schedule change detected.")
 
             else:
                 # Clear all files before we download more.
@@ -286,7 +316,6 @@ def main():
                        data=data,
                        files=files,
                        timeout=None)
-            recentLogs("I sleep...")
             # Main loop speed control
             time.sleep(30)
 
