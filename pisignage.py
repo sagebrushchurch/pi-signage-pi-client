@@ -174,20 +174,12 @@ def getIP():
     return ipAddress
 
 def getScreenResolution():
-    display = Gdk.Display.get_default()
-    if display is None:
-        return "No display found"
+    resolution = subprocess.run(['/home/pi/pi-signage-pi-client/resolution.sh'],
+        stdout=subprocess.PIPE).stdout.decode('utf-8')
 
-    monitor = display.get_primary_monitor()
-    if monitor is None:
-        return "No primary monitor found"
+    resolution = resolution.replace('\n', ' ')
 
-    geometry = monitor.get_geometry()
-
-    raw_width = geometry.width
-    raw_height = geometry.height
-
-    return f"{raw_width} x {raw_height}"
+    return resolution
 
 def getLoadAverages():
     """gets the load averages from /proc/loadavg"""
