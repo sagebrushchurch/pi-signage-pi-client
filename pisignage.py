@@ -17,23 +17,18 @@ import os
 gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk
 
-if os.path.exists('/dev/vchiq'):
-    import cec
-    cecType = 'raspi'
-elif os.path.exists('/dev/cec0'):
-    cecType = 'other'
-else:
-    cecType = 'none'
-    print("No CEC device detected")
-
 PI_NAME = os.uname()[1]
 if '-dev-' in PI_NAME.lower():
     BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 else:
-    BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
+        BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '1.6.7'
+PI_CLIENT_VERSION = '2.0'
 
+DEVICE_MODEL = os.environ['DEVICE_MODEL']
+
+browser = 'firefox'
+browser_flags = '--kiosk'
 logList = []
 sessionType = ""
 
@@ -41,19 +36,9 @@ def clearFiles():
     """clears all temp files used for playback, ensures nothing is re-used"""
     if os.path.exists('/tmp/signageFile'):
         os.remove('/tmp/signageFile')
-    if os.path.exists('/tmp/webPage.html'):
-        os.remove('/tmp/webPage.html')
+        recentLogs("Clearing files...")
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
-
-def getBrowserVariable():
-    global browser
-    if os.path.exists('/usr/bin/chromium'):
-        browser = 'chromium'
-    elif os.path.exists('/usr/bin/chromium-browser'):
-        browser = 'chromium-browser'
-    elif os.path.exists('/usr/bin/google-chrome'):
-        browser = 'google-chrome'
 
 def md5checksum(fname):
     """checksum function to check media file being played back, sent to server to verify accuracy
@@ -95,21 +80,29 @@ def avPID():
                             "-fast"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
+    recentLogs("Launching ffmpeg for audio/video file.")
+    return pid
 
+def linkPID():
+    pid = subprocess.Popen([browser,
+                            browser_flags,
+                            "/tmp/signageFile"],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.STDOUT)
+    recentLogs("Webpage detected. Launching Firefox.")
     return pid
 
 def otherFilePID():
     pid = subprocess.Popen([browser,
-                            "--enable-features=WebContentsForceDark",
-                            "--kiosk",
-                            "--autoplay-policy=no-user-gesture-required",
-                            "/tmp/controlFile.html"],
+                            browser_flags,
+                            "/tmp/signageFile"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
+    recentLogs("Undetermined file type. Attempting to launch in Firefox.")
     return pid
 
 def startDisplay(controlFile, signageFile):
-    """Starts chrome running the media content passed by signageFile
+    """Starts firefox running the media content passed by signageFile
     and run using controlFile
 
     Args:
@@ -117,58 +110,39 @@ def startDisplay(controlFile, signageFile):
         signageFile (str): path to media file
 
     Returns:
-        PID: process object from spawning chrome
+        PID: process object from spawning firefox
     """
-    clearFiles()
-    # Output the files to /tmp so they get purged on reboot
+    recentLogs("Downloading Signage File")
     wget.download(signageFile, out='/tmp/signageFile')
     if not controlFile == '':
+        recentLogs("Downloading Control File.")
         wget.download(controlFile, out='/tmp/controlFile.html')
-    # Pop open the chrome process so main loop doesn't wait, dump its output to null cuz its messy
     try:
         fileType = magic.from_file(
             '/tmp/signageFile', mime=True)
-        print(fileType)
-    except:
-        recentLogs("failed to read file type")
-        pass
+        # recentLogs(f"File type '{fileType}' detected.") # For Debugging
 
-    if 'video' in fileType:
-        pid = avPID()
-        print("video file")
+        # Probably a video or audio file
+        if 'video' in fileType or 'audio' in fileType:
+            pid = avPID()
 
-    elif 'audio' in fileType:
-        pid = avPID()
-        print("audio file")
+        # Probably a webpage
+        elif 'html' in fileType:
+            pid = linkPID()
 
-    else:
-        if not controlFile == '':
+        elif 'image' in fileType:
             pid = otherFilePID()
+
+    # Probably something broke
         else:
-            recentLogs('Control File Missing')
-    return pid
+            if controlFile == '':
+                pid = otherFilePID()
 
-def startWebDisplay(signageFile):
-    """Starts chrome running the website passed by signageFile
+        return pid
 
-    Args:
-        signageFile (str): html file with site redirect
-
-    Returns:
-        PID: process object from spawning pid
-    """
-    clearFiles()
-    # Output the file to /tmp so it would get purged on a reboot
-    wget.download(signageFile, out='/tmp/webPage.html')
-    # Pop open the chrome process so main loop doesnt wait, dump its ouput to null cuz its messy
-    pid2 = subprocess.Popen([browser,
-                             "--kiosk",
-                             "--autoplay-policy=no-user-gesture-required",
-                             "/tmp/webPage.html"],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.STDOUT)
-
-    return pid2
+    except:
+        recentLogs("Could not access signageFile")
+        pass
 
 def recentLogs(logMessage: str):
     """keeps track of the previous 50 debug messages for sending to server
@@ -199,88 +173,59 @@ def getIP():
 
     return ipAddress
 
-def getWaylandResolution():
-    display = Gdk.Display.get_default()
-    if display is None:
-        return "No display found"
-
-    monitor = display.get_primary_monitor()
-    if monitor is None:
-        return "No primary monitor found"
-
-    geometry = monitor.get_geometry()
-
-    raw_width = geometry.width
-    raw_height = geometry.height
-
-    return f"{raw_width} x {raw_height}"
-
-def getSessionType():
-    sessionType = os.environ['XDG_SESSION_TYPE'].lower()
-
-    return sessionType
-
 def getScreenResolution():
-    try:
-        if getSessionType() == 'x11':
-            screenInfo = subprocess.run(
-                ['xrandr',
-                '--display',
-                ':0'],
-                stdout=subprocess.PIPE,
-                check=True)
-            screenSplit = screenInfo.stdout.decode().split()
-            # ScreenResolution = screenSplit[1].replace('"', '')
-            ScreenResolution = screenSplit[7] + screenSplit[8] + \
-                screenSplit[9].replace(',', '')
-        elif getSessionType() == 'wayland':
-            ScreenResolution = getWaylandResolution()
-        else:
-            ScreenResolution = "Cannot get Display Environment"
-    except subprocess.CalledProcessError:
-        ScreenResolution = "No Screen Attached"
+    resolution = subprocess.run(['/home/pi/pi-signage-pi-client/resolution.sh'],
+        stdout=subprocess.PIPE).stdout.decode('utf-8')
 
-    return ScreenResolution
+    resolution = resolution.replace('\n', ' ')
 
-def getPowerStateCecCtl(data):
-    lines = str(data).split('\\n\\t')
-    for line in lines:
-        if 'pwr-state' in line:
-            state = line.split(':')[-1].strip()
-            rawState = state.split()[0]
-            if rawState == 'standby':
-                return 'False'
-            elif rawState == 'on':
-                return 'True'
-            else:
-                return rawState
-    return 'Unknown'
+    return resolution
+
+def getLoadAverages():
+    """gets the load averages from /proc/loadavg"""
+
+    loadAvgFull = subprocess.run([
+        'cat',
+        '/proc/loadavg',
+        ], stdout=subprocess.PIPE,
+    )
+
+    loadAvg = loadAvgFull.stdout.decode()
+
+    return loadAvg
+
+def getUptime():
+    """gets the uptime from /proc/uptime"""
+
+    uptimeFull = subprocess.run([
+        'cat',
+        '/proc/uptime',
+    ], stdout=subprocess.PIPE,
+    )
+
+    uptime = uptimeFull.stdout.decode()
+
+    return uptime
 
 def main():
     """pisignage control, pings server to check content schedule, downloading new content when
     updated, downloads control scripts for running media on each update,
     uploads screenshot to server for dashboard monitoring.
     """
-    if cecType == 'raspi':
-        cec.init()
-        tv = cec.Device(cec.CECDEVICE_TV)
-    elif cecType == 'other':
-        subprocess.Popen(["/usr/bin/cec-ctl",
-                          "--tv",
-                          "-S"],
-                         stdout=subprocess.DEVNULL,
-                         stderr=subprocess.STDOUT)
+
+    recentLogs("Service Starting...")
+
     clearFiles()
-    getBrowserVariable()
-    chromePID = None
-    tvStatusFlag = False
-    tvStatus = "False"
-    loopDelayCounter = 0
+    uptime = getUptime()
+    browserPID = None
     ipAddress = getIP()
+    loadAvg = getLoadAverages()
+    loopDelayCounter = 0
     ScreenResolution = getScreenResolution()
-    # Global variable for failed attempts to connect to server
     timeSinceLastConnection = 0
-    pid = ""
+
+    os.environ['WAYLAND_DISPLAY'] = os.environ.get('WAYLAND_DISPLAY', 'wayland-1')
+    os.environ['XDG_RUNTIME_DIR'] = os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}')
 
     while True:
         if loopDelayCounter == 5:
@@ -288,28 +233,25 @@ def main():
             ScreenResolution = getScreenResolution()
             loopDelayCounter = 0
         loopDelayCounter += 1
-
-        recentLogs("TV Power Status: " + tvStatus)
         # Checks if signageFile exists first then checksums.
-        # If signageFile doesn't exist: checksum the webpage file,
         # else 0.
 
         # first loop 0 since no files should exist
         if os.path.exists('/tmp/signageFile'):
             hash = md5checksum('/tmp/signageFile')
-        elif os.path.exists('/tmp/webPage.html'):
-            hash = md5checksum('/tmp/webPage.html')
         else:
             hash = 0
 
         # Build data parameters for server post request
         parameters = {}
         piName = os.uname()[1]
-        parameters["name"] = piName
         parameters["hash"] = hash
-        parameters["tvStatus"] = tvStatus
-        parameters["piLogs"] = logList
+        parameters["load"] = loadAvg
+        parameters["name"] = piName
         parameters["ipAddr"] = ipAddress
+        parameters["piLogs"] = logList
+        parameters["uptime"] = uptime
+        parameters["hardware"] = DEVICE_MODEL
         parameters["screenRes"] = ScreenResolution
         parameters["clientVersion"] = PI_CLIENT_VERSION
 
@@ -331,175 +273,58 @@ def main():
                 commandFile = response.json()['scriptPath']
                 commandFlags = response.json()['contentPath']
                 recentLogs(commandFlags)
-                if commandFlags == 'TurnOffTV':
-                    if cecType == 'raspi':
-                        tv.standby()
-                    elif cecType == 'other':
-                        subprocess.Popen(["/usr/bin/cec-ctl",
-                                          "--to",
-                                          "0",
-                                          "--standby"],
-                                         stdout=subprocess.DEVNULL,
-                                         stderr=subprocess.STDOUT)
-
-                elif commandFlags == 'TurnOnTV':
-                    if cecType == 'raspi':
-                        tv.power_on()
-                    elif cecType == 'other':
-                        subprocess.Popen(["/usr/bin/cec-ctl",
-                                          "--to",
-                                          "0",
-                                          "--image-view-on"],
-                                         stdout=subprocess.DEVNULL,
-                                         stderr=subprocess.STDOUT)
-
-                else:
-                    wget.download(commandFile, out='/tmp/commandfile.py')
-                    try:
-                        subprocess.Popen(
-                            ["/usr/bin/python3",
-                             "/tmp/commandfile.py",
-                             f"--{commandFlags}"])
-                    # sometimes tvon/off will throw an error cuz cec is a mess, so just in case
-                    except subprocess.CalledProcessError as e:
-                        recentLogs(str(e))
-                        recentLogs("probably unsupported TV")
-                recentLogs(commandFlags)
                 recentLogs(commandFile)
 
             # We don't want the pi to update on every loop if content is the same.
-            # Checks tv status on each loop for dashboard updates
             elif status == "NoChange":
-                recentLogs("I am sentient!")
-                try:
-                    if cecType == 'raspi':
-                        tvStatus = str(tv.is_on())
-                    elif cecType == 'other':
-                      cecStatus = subprocess.run(["/usr/bin/cec-ctl",
-                                                                "--to",
-                                                                "0",
-                                                                "--give-device-power-status"],
-                                                                check=True, capture_output=True)
-                      tvStatus = getPowerStateCecCtl(cecStatus.stdout)
-                # Not all displays support cec so this is to catch any unsupported tv error
-                except OSError as e:
-                    recentLogs(str(e))
-                    tvStatus = "UnsupportedTV"
+                recentLogs("No schedule change detected.")
 
-            # If not Command or NoChange, this is for actual content updating
             else:
-                # We check for DEFAULT keyword to use as a trigger to turn tv off since
-                # it's probably done for the day when default content is live.
-                if status == "DEFAULT":
-                    if tvStatusFlag:
-                        recentLogs("turning tv off")
-                        if cecType == 'raspi':
-                            tv.standby()
-                        elif cecType == 'other':
-                            subprocess.Popen(["/usr/bin/cec-ctl",
-                                              "--to",
-                                              "0",
-                                              "--standby"],
-                                             stdout=subprocess.DEVNULL,
-                                             stderr=subprocess.STDOUT)
-                        tvStatusFlag = False
-                        try:
-                            if cecType == 'raspi':
-                                tvStatus = str(tv.is_on())
-                            elif cecType == 'other':
-                                cecStatus = subprocess.run(["/usr/bin/cec-ctl",
-                                                            "--to", "0",
-                                                            "--give-device-power-status"],
-                                                            check=True,
-                                                            capture_output=True)
-                                tvStatus = getPowerStateCecCtl(cecStatus.stdout)
-                        except OSError as e:
-                            recentLogs(str(e))
-                            tvStatus = "UnsupportedTV"
-                else:
-                    if not tvStatusFlag:
-                        recentLogs("turning tv on")
-                        if cecType == 'raspi':
-                            tv.power_on()
-                        elif cecType == 'other':
-                            subprocess.Popen(["/usr/bin/cec-ctl",
-                                              "--to",
-                                              "0",
-                                              "--image-view-on"],
-                                             stdout=subprocess.DEVNULL,
-                                             stderr=subprocess.STDOUT)
-                        tvStatusFlag = True
-                        try:
-                            if cecType == 'raspi':
-                                tvStatus = str(tv.is_on())
-                            elif cecType =='other':
-                                tvStatus = getPowerStateCecCtl(subprocess.run(["/usr/bin/cec-ctl",
-                                                                "--to",
-                                                                "0",
-                                                                "--give-device-power-status"],
-                                                                check=True,
-                                                                stdout=subprocess.PIPE))
-                        except OSError as e:
-                            recentLogs(str(e))
-                            tvStatus = "UnsupportedTV"
-
                 # Clear all files before we download more.
-
-                # We need to check if controlFile exists to determine if
-                # the pi needs to display a webpage or other media
                 clearFiles()
-                # Checking if chrome is active, it won't be after the first boot
-                if chromePID:
-                    kill(chromePID.pid)
+                # Checking if firefox is active, it won't be after the first boot
+                if browserPID:
+                    kill(browserPID.pid)
                 # Pull the paths of the files from the server response so we can download each
                 controlFile = response.json()['scriptPath']
                 signageFile = response.json()['contentPath']
-                if controlFile == '' and signageFile.endswith('.html'):
-                    chromePID = startWebDisplay(signageFile)
-                else:
-                    chromePID = startDisplay(controlFile, signageFile)
+                browserPID = startDisplay(controlFile, signageFile)
             # Take a screenshot of the display
-            if getSessionType() == "x11":
-                subprocess.run(["scrot",
-                                "-q",
-                                "5",
-                                "-t",
-                                "10",
-                                "-o",
-                                "-z",
-                                f"/tmp/{piName}.png"],
-                                check=True)
-            elif getSessionType() == "wayland":
-                subprocess.run(["/home/pi/gnome-screenshot/build/src/gnome-screenshot",
-                                "--file",
-                                f"/tmp/{piName}.png"],
-                                check=True)
+            ssPath = f"/tmp/{piName}.png"
+            try:
+                subprocess.run(['grim',
+                            ssPath],
+                            capture_output=True,
+                            text=True,
+                            check=True)
+            except subprocess.CalledProcessError as e:
+                recentLogs(f"Error taking screenshot: {e}")
+                recentLogs(f"Error output: {e.stderr}")
             # Build data object to upload screenshot to server
             data = {'piName': piName}
-            files = {'file': open(f'/tmp/{piName}.png', 'rb')}
+            files = {'file': open(ssPath, 'rb')}
             # timeout=None so it doesnt timeout for upload
             httpx.post(f'{BASE_URL}/UploadPiScreenshot',
                        data=data,
                        files=files,
                        timeout=None)
-            recentLogs("I sleep...")
             # Main loop speed control
             time.sleep(30)
 
 # Exceptions
         except httpx.HTTPError:
             # At each failed response add 1 attempt to the tally
-            # After 480 failed attempts (4 hours), reboot the pi
+            # After 240 failed attempts (2 hours), reboot the pi
             timeSinceLastConnection += 1
-            if timeSinceLastConnection >= 480:
+            if timeSinceLastConnection >= 240:
                 os.system('sudo reboot')
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
             time.sleep(30)
         except psutil.NoSuchProcess:
-            # Sometimes chrome's pid changes, I think it's cuz of the redirect for webpage viewing but
+            # Sometimes firefox's pid changes, I think it's cuz of the redirect for webpage viewing but
             # this catches it and another loop fixes it when it happens, so just loop again quickly
             time.sleep(1)
-            recentLogs("chrome pid lost, restarting")
+            recentLogs("firefox pid lost, restarting")
         except Exception as e:
             # General exception so that loop never crashes out, it will print it to the logs
             recentLogs('type is: ' + e.__class__.__name__)
