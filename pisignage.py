@@ -23,7 +23,7 @@ if '-dev-' in PI_NAME.lower():
 else:
         BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.0'
+PI_CLIENT_VERSION = '2.1'
 
 DEVICE_MODEL = os.environ['DEVICE_MODEL']
 
@@ -278,6 +278,14 @@ def main():
             # We don't want the pi to update on every loop if content is the same.
             elif status == "NoChange":
                 recentLogs("No schedule change detected.")
+
+            elif status == "DEFAULT":
+                recentLogs("Detected DEFAULT status.")
+                # Clear all files
+                clearFiles()
+                # Close the browser
+                if browserPID:
+                    kill(browserPID.pid)
 
             else:
                 # Clear all files before we download more.
