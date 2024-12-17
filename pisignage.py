@@ -224,10 +224,11 @@ def main():
     ScreenResolution = getScreenResolution()
     timeSinceLastConnection = 0
     previous_status = None
+    default_hash = None
 
     os.environ['WAYLAND_DISPLAY'] = os.environ.get('WAYLAND_DISPLAY', 'wayland-1')
     os.environ['XDG_RUNTIME_DIR'] = os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}')
-
+    lastConnectFlagDefault = False
     while True:
         if loopDelayCounter == 5:
             ipAddress = getIP()
@@ -246,7 +247,11 @@ def main():
         # Build data parameters for server post request
         parameters = {}
         piName = os.uname()[1]
-        parameters["hash"] = hash
+        if not lastConnectFlagDefault:
+            parameters["hash"] = hash
+        else:
+            parameters["hash"] = default_hash
+            lastConnectFlagDefault = False
         parameters["load"] = loadAvg
         parameters["name"] = piName
         parameters["ipAddr"] = ipAddress
@@ -291,9 +296,16 @@ def main():
                     recentLogs("Detected DEFAULT status.")
                     # Clear all files
                     clearFiles()
+                    # Pull Default ONCE
+                    if default_hash is None:
+                        signageFile = response.json()['contentPath']
+                        wget.download(signageFile, out='/tmp/signageFile')
+                        default_hash = md5checksum('/tmp/signageFile')
                     # Close the browser
                     if browserPID:
                         kill(browserPID.pid)
+
+                    lastConnectFlagDefault = True
 
             else:
                 # Clear all files before we download more.
