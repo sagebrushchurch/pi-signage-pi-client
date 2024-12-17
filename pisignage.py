@@ -247,11 +247,7 @@ def main():
         # Build data parameters for server post request
         parameters = {}
         piName = os.uname()[1]
-        if not lastConnectFlagDefault:
-            parameters["hash"] = hash
-        else:
-            parameters["hash"] = default_hash
-            lastConnectFlagDefault = False
+        parameters["hash"] = hash
         parameters["load"] = loadAvg
         parameters["name"] = piName
         parameters["ipAddr"] = ipAddress
@@ -297,15 +293,12 @@ def main():
                     # Clear all files
                     clearFiles()
                     # Pull Default ONCE
-                    if default_hash is None:
-                        signageFile = response.json()['contentPath']
-                        wget.download(signageFile, out='/tmp/signageFile')
-                        default_hash = md5checksum('/tmp/signageFile')
+                    signageFile = response.json()['contentPath']
+                    wget.download(signageFile, out='/tmp/signageFile')
+                    hash = md5checksum('/tmp/signageFile')
                     # Close the browser
                     if browserPID:
                         kill(browserPID.pid)
-
-                    lastConnectFlagDefault = True
 
             else:
                 # Clear all files before we download more.
