@@ -223,6 +223,7 @@ def main():
     loopDelayCounter = 0
     ScreenResolution = getScreenResolution()
     timeSinceLastConnection = 0
+    previous_status = None
 
     os.environ['WAYLAND_DISPLAY'] = os.environ.get('WAYLAND_DISPLAY', 'wayland-1')
     os.environ['XDG_RUNTIME_DIR'] = os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}')
@@ -265,27 +266,34 @@ def main():
             response.raise_for_status()
 
             status = response.json()['status']
-            recentLogs(f"Status: {status}")
+            # Only log if status has changed
+            if status != previous_status:
+                recentLogs(f"Status: {status}")
+
             # Special case "command" keyword from scriptPath, causes pi to execute
             # command script using flags included in contentPath.
             if status == "Command":
-                recentLogs("do command things")
+                if status != previous_status:
+                    recentLogs("do command things")
                 commandFile = response.json()['scriptPath']
                 commandFlags = response.json()['contentPath']
-                recentLogs(commandFlags)
-                recentLogs(commandFile)
+                if status != previous_status:
+                    recentLogs(commandFlags)
+                    recentLogs(commandFile)
 
             # We don't want the pi to update on every loop if content is the same.
             elif status == "NoChange":
-                recentLogs("No schedule change detected.")
+                if status != previous_status:
+                    recentLogs("No schedule change detected.")
 
             elif status == "DEFAULT":
-                recentLogs("Detected DEFAULT status.")
-                # Clear all files
-                clearFiles()
-                # Close the browser
-                if browserPID:
-                    kill(browserPID.pid)
+                if status != previous_status:
+                    recentLogs("Detected DEFAULT status.")
+                    # Clear all files
+                    clearFiles()
+                    # Close the browser
+                    if browserPID:
+                        kill(browserPID.pid)
 
             else:
                 # Clear all files before we download more.
@@ -318,6 +326,8 @@ def main():
                        timeout=None)
             # Main loop speed control
             time.sleep(30)
+
+            previous_status = status
 
 # Exceptions
         except httpx.HTTPError:
