@@ -23,7 +23,8 @@ if '-dev-' in PI_NAME.lower():
 else:
         BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.1.1'
+PI_CLIENT_VERSION = '2.1.2'
+# Added specific 'Image' detection. Mostly for debugging, but useful.
 
 DEVICE_MODEL = os.environ['DEVICE_MODEL']
 
@@ -92,6 +93,15 @@ def linkPID():
     recentLogs("Webpage detected. Launching Firefox.")
     return pid
 
+def imagePID():
+    pid = subprocess.Popen([browser,
+                            browser_flags,
+                            "/tmp/signageFile"],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.STDOUT)
+    recentLogs("Image detected. Launching Firefox.")
+    return pid
+
 def otherFilePID():
     pid = subprocess.Popen([browser,
                             browser_flags,
@@ -130,10 +140,11 @@ def startDisplay(controlFile, signageFile):
         elif 'html' in fileType:
             pid = linkPID()
 
+        # Probably a picture
         elif 'image' in fileType:
-            pid = otherFilePID()
+            pid = imagePID()
 
-    # Probably something broke
+        # Probably something broke
         else:
             if controlFile == '':
                 pid = otherFilePID()
