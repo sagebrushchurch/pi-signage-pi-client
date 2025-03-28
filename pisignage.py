@@ -21,7 +21,7 @@ PI_NAME = os.uname()[1]
 if '-dev-' in PI_NAME.lower():
     BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 else:
-        BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
+    BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
 PI_CLIENT_VERSION = '2.1.2'
 # Added specific 'Image' detection. Mostly for debugging, but useful.
