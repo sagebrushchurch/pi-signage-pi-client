@@ -350,6 +350,7 @@ def main():
 # Exceptions
         except httpx.HTTPError as http_exc:
             recentLogs(f"HTTP Error: {http_exc}")
+            print(f"HTTP Error: {http_exc}")
             # # At each failed response add 1 attempt to the tally
             # # After 240 failed attempts (2 hours), reboot the pi
             timeSinceLastConnection += 1
