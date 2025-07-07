@@ -355,7 +355,7 @@ def main():
             # # After 240 failed attempts (2 hours), reboot the pi
             timeSinceLastConnection += 1
             if timeSinceLastConnection >= 5:
-                os.system('sudo systemctl resetart networking && systemctl --user restart piman.service ')
+                os.system('sudo systemctl restart networking && systemctl --user restart piman.service ')
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
             time.sleep(5)
         except psutil.NoSuchProcess:
