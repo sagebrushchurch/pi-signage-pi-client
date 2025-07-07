@@ -354,7 +354,7 @@ def main():
             # # At each failed response add 1 attempt to the tally
             # # After 240 failed attempts (2 hours), reboot the pi
             timeSinceLastConnection += 1
-            if timeSinceLastConnection >= 20:
+            if timeSinceLastConnection >= 5:
                 os.system('sudo systemctl resetart networking && systemctl --user restart piman.service ')
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
             time.sleep(30)
