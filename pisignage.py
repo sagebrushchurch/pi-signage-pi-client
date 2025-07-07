@@ -25,8 +25,10 @@ else:
 
 PI_CLIENT_VERSION = '2.1.3'
 # Added specific 'Image' detection. Mostly for debugging, but useful.
-
-DEVICE_MODEL = os.environ['DEVICE_MODEL']
+try:
+    DEVICE_MODEL = os.environ['DEVICE_MODEL']
+except KeyError:
+    DEVICE_MODEL = 'ENV Not Set'
 
 browser = 'firefox'
 browser_flags = '--kiosk'
@@ -350,11 +352,11 @@ def main():
             recentLogs(f"HTTP Error: {http_exc}")
             # # At each failed response add 1 attempt to the tally
             # # After 240 failed attempts (2 hours), reboot the pi
-            # timeSinceLastConnection += 1
-            # if timeSinceLastConnection >= 240:
-            #     os.system('sudo reboot')
-            # print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
-            # time.sleep(30)
+            timeSinceLastConnection += 1
+            if timeSinceLastConnection >= 20:
+                os.system('sudo systemctl resetart networking && systemctl --user restart piman.service ')
+            print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
+            time.sleep(30)
         except psutil.NoSuchProcess:
             # Sometimes firefox's pid changes, I think it's cuz of the redirect for webpage viewing but
             # this catches it and another loop fixes it when it happens, so just loop again quickly
