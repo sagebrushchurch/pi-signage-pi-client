@@ -357,7 +357,7 @@ def main():
             if timeSinceLastConnection >= 5:
                 os.system('sudo systemctl resetart networking && systemctl --user restart piman.service ')
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
-            time.sleep(30)
+            time.sleep(5)
         except psutil.NoSuchProcess:
             # Sometimes firefox's pid changes, I think it's cuz of the redirect for webpage viewing but
             # this catches it and another loop fixes it when it happens, so just loop again quickly
