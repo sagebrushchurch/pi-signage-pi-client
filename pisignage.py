@@ -23,7 +23,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.1.2'
+PI_CLIENT_VERSION = '2.1.3'
 # Added specific 'Image' detection. Mostly for debugging, but useful.
 
 DEVICE_MODEL = os.environ['DEVICE_MODEL']
@@ -339,7 +339,7 @@ def main():
             httpx.post(f'{BASE_URL}/UploadPiScreenshot',
                        data=data,
                        files=files,
-                       timeout=None)
+                       timeout=5)
             # Main loop speed control
             time.sleep(30)
 
