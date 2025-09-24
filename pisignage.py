@@ -23,8 +23,8 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.2.0'
-# Added specific 'Image' detection. Mostly for debugging, but useful.
+PI_CLIENT_VERSION = '2.2.1'
+# Fixed the reboot problem by hardcoding it in this file
 try:
     DEVICE_MODEL = os.environ['DEVICE_MODEL']
 except KeyError:
@@ -287,13 +287,15 @@ def main():
             # Special case "command" keyword from scriptPath, causes pi to execute
             # command script using flags included in contentPath.
             if status == "Command":
-                if status != previous_status:
-                    recentLogs("do command things")
                 commandFile = response.json()['scriptPath']
                 commandFlags = response.json()['contentPath']
                 if status != previous_status:
-                    recentLogs(commandFlags)
-                    recentLogs(commandFile)
+                    recentLogs("do command things")
+                    if commandFlags == "Restart":
+                        os.system("sudo reboot")
+                if status != previous_status:
+                    recentLogs(f"Command Flags: {commandFlags}")
+                    recentLogs(f"Command File: {commandFile}")
 
             # We don't want the pi to update on every loop if content is the same.
             elif status == "NoChange":

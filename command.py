@@ -6,7 +6,7 @@ import time
 import httpx
 
 
-BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
+BASE_URL = 'https://pisignage.sagebrush.work/pisignage_api'
 
 parser = argparse.ArgumentParser(description="Pi Signage Command Script",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -19,7 +19,7 @@ args = parser.parse_args()
 config = vars(args)
 
 if config['Restart']:
-    os.system("reboot")
+    os.system("sudo reboot")
 
 if config['UploadScreenshot']:
     piName = os.uname()[1]
