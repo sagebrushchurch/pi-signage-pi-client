@@ -19,7 +19,7 @@ args = parser.parse_args()
 config = vars(args)
 
 if config['Restart']:
-    os.system("sudo reboot")
+    os.system("reboot")
 
 if config['UploadScreenshot']:
     piName = os.uname()[1]
