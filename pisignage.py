@@ -73,16 +73,60 @@ def kill(proc_pid):
     process.kill()
 
 # Define various pids
+def get_ffmpeg_version():
+    """Get FFmpeg version to determine codec compatibility"""
+    try:
+        result = subprocess.run(['ffmpeg', '-version'], 
+                              capture_output=True, text=True, timeout=5, check=False)
+        version_line = result.stdout.split('\n')[0]
+        # Extract version number (e.g., "ffmpeg version 7.1.2" -> "7.1.2")
+        version_str = version_line.split()[2]
+        major_version = int(version_str.split('.')[0])
+        return major_version
+    except (subprocess.TimeoutExpired, IndexError, ValueError, OSError):
+        recentLogs("Could not detect FFmpeg version, assuming v5 compatibility")
+        return 5
+
+def get_video_codec():
+    """Detect video codec of the file"""
+    try:
+        result = subprocess.run(['ffprobe', '-v', 'quiet', '-select_streams', 'v:0',
+                               '-show_entries', 'stream=codec_name', '-of', 
+                               'csv=p=0', '/tmp/signageFile'], 
+                              capture_output=True, text=True, timeout=5, check=False)
+        codec = result.stdout.strip()
+        return codec if codec else None
+    except (subprocess.TimeoutExpired, OSError):
+        recentLogs("Could not detect video codec, using default playback")
+        return None
+
 def avPID():
-    pid = subprocess.Popen(["ffplay",
-                            "-i",
-                            "/tmp/signageFile",
-                            "-loop",
-                            "0",
-                            "-fs",
-                            "-fast"],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.STDOUT)
+    ffmpeg_version = get_ffmpeg_version()
+    video_codec = get_video_codec()
+    
+    # Base ffplay command
+    cmd = ["ffplay", "-i", "/tmp/signageFile", "-loop", "0", "-fs", "-fast"]
+    
+    # For FFmpeg v7+, add hardware decoding if available
+    if ffmpeg_version >= 7 and video_codec:
+        if video_codec in ['h264']:
+            # Use V4L2 M2M hardware decoder for H.264
+            cmd.insert(1, "-c:v")
+            cmd.insert(2, "h264_v4l2m2m")
+            recentLogs(f"Using H.264 hardware decoding for FFmpeg v{ffmpeg_version}")
+        elif video_codec in ['hevc', 'h265']:
+            # Use V4L2 M2M hardware decoder for H.265/HEVC
+            cmd.insert(1, "-c:v")
+            cmd.insert(2, "hevc_v4l2m2m")
+            recentLogs(f"Using H.265/HEVC hardware decoding for FFmpeg v{ffmpeg_version}")
+        else:
+            recentLogs(f"No hardware decoder available for codec {video_codec}, using software decoding")
+    elif ffmpeg_version >= 7:
+        recentLogs(f"FFmpeg v{ffmpeg_version} detected, but codec detection failed - using software decoding")
+    else:
+        recentLogs(f"FFmpeg v{ffmpeg_version} detected, using compatible software decoding")
+    
+    pid = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     recentLogs("Launching ffmpeg for audio/video file.")
     return pid
 
@@ -150,12 +194,15 @@ def startDisplay(controlFile, signageFile):
         else:
             if controlFile == '':
                 pid = otherFilePID()
+            else:
+                # If controlFile is not empty, we still need to assign pid
+                pid = otherFilePID()
 
         return pid
 
-    except:
-        recentLogs("Could not access signageFile")
-        pass
+    except Exception as e:
+        recentLogs(f"Could not access signageFile: {e}")
+        return None
 
 def recentLogs(logMessage: str):
     """keeps track of the previous 50 debug messages for sending to server
