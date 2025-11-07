@@ -11,11 +11,11 @@ import httpx
 import magic
 import time
 import wget
-import gi
+# import gi
 import os
 
-gi.require_version('Gdk', '3.0')
-from gi.repository import Gdk
+# gi.require_version('Gdk', '3.0')
+# from gi.repository import Gdk
 
 PI_NAME = os.uname()[1]
 if '-dev-' in PI_NAME.lower():
@@ -23,7 +23,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.2.1'
+PI_CLIENT_VERSION = '2.2.2'
 # Fixed the reboot problem by hardcoding it in this file
 try:
     DEVICE_MODEL = os.environ['DEVICE_MODEL']
