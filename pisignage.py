@@ -11,11 +11,11 @@ import httpx
 import magic
 import time
 import wget
-import gi
+# import gi
 import os
 
-gi.require_version('Gdk', '3.0')
-from gi.repository import Gdk
+# gi.require_version('Gdk', '3.0')
+# from gi.repository import Gdk
 
 PI_NAME = os.uname()[1]
 if '-dev-' in PI_NAME.lower():
