@@ -13,6 +13,7 @@ import time
 import wget
 # import gi
 import os
+import platform
 
 # gi.require_version('Gdk', '3.0')
 # from gi.repository import Gdk
@@ -180,6 +181,15 @@ def startDisplay(controlFile, signageFile):
 
         # Probably a video or audio file
         if 'video' in fileType or 'audio' in fileType:
+            if 'video' in fileType:
+                arch = platform.machine()
+                # 3.8GB in bytes to account for system reserved memory on 4GB modules
+                min_ram = 3.8 * 1024 * 1024 * 1024
+                ram = psutil.virtual_memory().total
+                
+                if arch != 'x86_64' or ram < min_ram:
+                    recentLogs(f"Skipping video: Arch={arch}, RAM={ram/(1024**3):.1f}GB. Need x86_64 & 4GB+")
+                    return None
             pid = avPID()
 
         # Probably a webpage
