@@ -298,7 +298,7 @@ def main():
 
     os.environ['WAYLAND_DISPLAY'] = os.environ.get('WAYLAND_DISPLAY', 'wayland-1')
     os.environ['XDG_RUNTIME_DIR'] = os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}')
-    lastConnectFlagDefault = False
+
     while True:
         if loopDelayCounter == 5:
             ipAddress = getIP()
@@ -393,12 +393,15 @@ def main():
                 recentLogs(f"Error output: {e.stderr}")
             # Build data object to upload screenshot to server
             data = {'piName': piName}
-            files = {'file': open(ssPath, 'rb')}
-            # timeout=None so it doesnt timeout for upload
-            httpx.post(f'{BASE_URL}/UploadPiScreenshot',
-                       data=data,
-                       files=files,
-                       timeout=5)
+            with open(ssPath, 'rb') as ssFile:
+                files = {'file': ssFile}
+                # Longer timeout for image file upload
+                httpx.post(f'{BASE_URL}/UploadPiScreenshot',
+                           data=data,
+                           files=files,
+                           timeout=10)
+            # Reset failure counter on every successful connection
+            timeSinceLastConnection = 0
             # Main loop speed control
             time.sleep(30)
 
@@ -408,11 +411,18 @@ def main():
         except httpx.HTTPError as http_exc:
             recentLogs(f"HTTP Error: {http_exc}")
             print(f"HTTP Error: {http_exc}")
-            # # At each failed response add 1 attempt to the tally
-            # # After 60 failed attempts (0.5 hours), restart networking and piman service
             timeSinceLastConnection += 1
-            if timeSinceLastConnection >= 60:
-                os.system('sudo systemctl restart networking && systemctl --user restart piman.service ')
+            # After 60 failed attempts (~30 min), restart networking once.
+            # This process (piman.service) keeps running after the restart,
+            # so the counter continues to increment if connectivity is not restored.
+            if timeSinceLastConnection == 60:
+                recentLogs("Lost connection for 30 minutes, restarting networking...")
+                os.system('sudo systemctl restart networking')
+            # After 120 failed attempts (~60 min), networking restart did not restore
+            # connectivity — escalate to a full reboot.
+            elif timeSinceLastConnection == 120:
+                recentLogs("Lost connection for 60 minutes, rebooting...")
+                os.system('sudo reboot')
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
             time.sleep(30)
         except psutil.NoSuchProcess:
