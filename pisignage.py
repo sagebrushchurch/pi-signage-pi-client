@@ -10,7 +10,6 @@ import psutil
 import httpx
 import magic
 import time
-import wget
 # import gi
 import os
 import platform
@@ -35,6 +34,21 @@ browser = 'firefox'
 browser_flags = '--kiosk'
 logList = []
 sessionType = ""
+
+def downloadFile(url, dest):
+    """Download a file from url to dest using a streaming request with a timeout.
+    Avoids hanging indefinitely on flaky networks, and handles large files without
+    loading them fully into memory.
+
+    Args:
+        url (str): URL to download from
+        dest (str): local file path to write to
+    """
+    with httpx.stream('GET', url, timeout=30, follow_redirects=True) as r:
+        r.raise_for_status()
+        with open(dest, 'wb') as f:
+            for chunk in r.iter_bytes():
+                f.write(chunk)
 
 def clearFiles():
     """clears all temp files used for playback, ensures nothing is re-used"""
@@ -170,10 +184,10 @@ def startDisplay(controlFile, signageFile):
         PID: process object from spawning firefox
     """
     recentLogs("Downloading Signage File")
-    wget.download(signageFile, out='/tmp/signageFile')
+    downloadFile(signageFile, '/tmp/signageFile')
     if not controlFile == '':
         recentLogs("Downloading Control File.")
-        wget.download(controlFile, out='/tmp/controlFile.html')
+        downloadFile(controlFile, '/tmp/controlFile.html')
     try:
         fileType = magic.from_file(
             '/tmp/signageFile', mime=True)
@@ -293,6 +307,7 @@ def main():
     loopDelayCounter = 0
     ScreenResolution = getScreenResolution()
     timeSinceLastConnection = 0
+    networking_restarted = False
     previous_status = None
     default_hash = None
 
@@ -336,6 +351,12 @@ def main():
             # Check for status of 2XX in httpx response
             response.raise_for_status()
 
+            # Reset failure counter as soon as the main server connection is confirmed.
+            # Keeping this here (not near the screenshot upload) means a failed
+            # screenshot upload cannot falsely count as a server connection failure.
+            timeSinceLastConnection = 0
+            networking_restarted = False
+
             status = response.json()['status']
             # Only log if status has changed
             if status != previous_status:
@@ -364,7 +385,7 @@ def main():
                     clearFiles()
                     # Pull Default ONCE
                     signageFile = response.json()['contentPath']
-                    wget.download(signageFile, out='/tmp/signageFile')
+                    downloadFile(signageFile, '/tmp/signageFile')
                     hash = md5checksum('/tmp/signageFile')
                     # Close the browser
                     if browserPID:
@@ -400,8 +421,6 @@ def main():
                            data=data,
                            files=files,
                            timeout=10)
-            # Reset failure counter on every successful connection
-            timeSinceLastConnection = 0
             # Main loop speed control
             time.sleep(30)
 
@@ -412,15 +431,17 @@ def main():
             recentLogs(f"HTTP Error: {http_exc}")
             print(f"HTTP Error: {http_exc}")
             timeSinceLastConnection += 1
-            # After 60 failed attempts (~30 min), restart networking once.
-            # This process (piman.service) keeps running after the restart,
-            # so the counter continues to increment if connectivity is not restored.
-            if timeSinceLastConnection == 60:
+            # After 60 consecutive failed attempts (~30 min), restart networking once.
+            # The >= check with a flag ensures this fires exactly once even if the
+            # counter skips a value. This process (piman.service) keeps running after
+            # the restart, so the counter continues to increment if not restored.
+            if timeSinceLastConnection >= 60 and not networking_restarted:
+                networking_restarted = True
                 recentLogs("Lost connection for 30 minutes, restarting networking...")
                 os.system('sudo systemctl restart networking')
-            # After 120 failed attempts (~60 min), networking restart did not restore
-            # connectivity — escalate to a full reboot.
-            elif timeSinceLastConnection == 120:
+            # After 120 consecutive failed attempts (~60 min), networking restart did
+            # not restore connectivity — escalate to a full reboot.
+            elif timeSinceLastConnection >= 120:
                 recentLogs("Lost connection for 60 minutes, rebooting...")
                 os.system('sudo reboot')
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
