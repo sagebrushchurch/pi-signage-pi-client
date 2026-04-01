@@ -23,7 +23,7 @@ if '-dev-' in PI_NAME.lower():
 else:
         BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.3.0'
+PI_CLIENT_VERSION = '2.4.0'
 # Added specific 'Image' detection. Mostly for debugging, but useful.
 try:
     DEVICE_MODEL = os.environ['DEVICE_MODEL']
