@@ -10,6 +10,7 @@ import psutil
 import httpx
 import magic
 import time
+import re
 # import gi
 import os
 import platform
@@ -291,6 +292,32 @@ def getUptime():
 
     return uptime
 
+SWAY_CONFIG_PATH = os.path.expanduser("~/.config/sway/config")
+
+def set_sway_transform(value):
+    """Persist an output transform in the Sway config file so it survives reboots.
+
+    Replaces any existing 'output * transform' line, or appends one if absent.
+    """
+    line = f"output * transform {value}\n"
+    pattern = re.compile(r"^\s*output\s+\*\s+transform\s+\S+.*$", re.MULTILINE)
+    try:
+        if os.path.exists(SWAY_CONFIG_PATH):
+            with open(SWAY_CONFIG_PATH, "r") as f:
+                contents = f.read()
+            if pattern.search(contents):
+                contents = pattern.sub(f"output * transform {value}", contents)
+            else:
+                contents += line
+        else:
+            os.makedirs(os.path.dirname(SWAY_CONFIG_PATH), exist_ok=True)
+            contents = line
+        with open(SWAY_CONFIG_PATH, "w") as f:
+            f.write(contents)
+    except OSError as e:
+        recentLogs(f"Failed to update sway config: {e}")
+
+
 def main():
     """pisignage control, pings server to check content schedule, downloading new content when
     updated, downloads control scripts for running media on each update,
@@ -375,6 +402,21 @@ def main():
                 if commandFlags == "Restart":
                     recentLogs("Rebooting...")
                     os.system("sudo reboot")
+                elif commandFlags == "RestartProcess":
+                    recentLogs("Restarting piman service...")
+                    os.system("systemctl --user restart piman.service")
+                elif commandFlags == "RotatePortraitLeft":
+                    recentLogs("Rotating screen portrait left (270)...")
+                    if os.system("swaymsg output '*' transform 270") == 0:
+                        set_sway_transform(270)
+                elif commandFlags == "RotatePortraitRight":
+                    recentLogs("Rotating screen portrait right (90)...")
+                    if os.system("swaymsg output '*' transform 90") == 0:
+                        set_sway_transform(90)
+                elif commandFlags == "RotateLandscape":
+                    recentLogs("Rotating screen landscape (0)...")
+                    if os.system("swaymsg output '*' transform 0") == 0:
+                        set_sway_transform(0)
 
             # We don't want the pi to update on every loop if content is the same.
             elif status == "NoChange":
