@@ -6,7 +6,7 @@ import time
 import httpx
 
 
-BASE_URL = 'https://pisignage.sagebrush.dev/pisignage_api'
+BASE_URL = 'https://pisignage.sagebrush.work/pisignage_api'
 
 parser = argparse.ArgumentParser(description="Pi Signage Command Script",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)

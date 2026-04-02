@@ -21,9 +21,9 @@ PI_NAME = os.uname()[1]
 if '-dev-' in PI_NAME.lower():
     BASE_URL = 'https://piman.sagebrush.dev/pi_manager_api'
 else:
-        BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
+    BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.4.0'
+PI_CLIENT_VERSION = '2.4.1'
 # Added specific 'Image' detection. Mostly for debugging, but useful.
 try:
     DEVICE_MODEL = os.environ['DEVICE_MODEL']
@@ -365,13 +365,16 @@ def main():
             # Special case "command" keyword from scriptPath, causes pi to execute
             # command script using flags included in contentPath.
             if status == "Command":
-                if status != previous_status:
-                    recentLogs("do command things")
                 commandFile = response.json()['scriptPath']
                 commandFlags = response.json()['contentPath']
                 if status != previous_status:
-                    recentLogs(commandFlags)
-                    recentLogs(commandFile)
+                    recentLogs("do command things")
+                    recentLogs(f"Command Flags: {commandFlags}")
+                    recentLogs(f"Command File: {commandFile}")
+                # Execute command every loop, not just on status change
+                if commandFlags == "Restart":
+                    recentLogs("Rebooting...")
+                    os.system("sudo reboot")
 
             # We don't want the pi to update on every loop if content is the same.
             elif status == "NoChange":
