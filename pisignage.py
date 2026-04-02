@@ -25,11 +25,57 @@ else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
 PI_CLIENT_VERSION = '2.5.0'
-# Added specific 'Image' detection. Mostly for debugging, but useful.
-try:
-    DEVICE_MODEL = os.environ['DEVICE_MODEL']
-except KeyError:
-    DEVICE_MODEL = 'ENV Not Set'
+
+
+def get_device_model():
+    """Dynamically detect the device model.
+
+    Detection order:
+    1. /sys/firmware/devicetree/base/model  -- Raspberry Pi and many ARM SBCs
+    2. 'Model' line in /proc/cpuinfo        -- Raspberry Pi fallback
+    3. /sys/devices/virtual/dmi/id/product_name -- x86/x86_64 mini PCs via DMI
+    4. Generic fallback using platform info
+    """
+    # Raspberry Pi / ARM SBC: device-tree model file
+    dt_model_path = '/sys/firmware/devicetree/base/model'
+    if os.path.exists(dt_model_path):
+        try:
+            with open(dt_model_path, 'r') as f:
+                model = f.read().rstrip('\x00').strip()
+            if model:
+                return model
+        except OSError:
+            pass
+
+    # Raspberry Pi fallback: 'Model' line in /proc/cpuinfo (capital M, text value)
+    try:
+        with open('/proc/cpuinfo', 'r') as f:
+            for line in f:
+                if line.startswith('Model'):
+                    parts = line.split(':', 1)
+                    if len(parts) == 2:
+                        model = parts[1].strip()
+                        if model:
+                            return model
+    except OSError:
+        pass
+
+    # x86/x86_64 mini PCs: DMI product name
+    dmi_path = '/sys/devices/virtual/dmi/id/product_name'
+    if os.path.exists(dmi_path):
+        try:
+            with open(dmi_path, 'r') as f:
+                model = f.read().strip()
+            if model:
+                return model
+        except OSError:
+            pass
+
+    # Generic fallback
+    return f"{platform.system()} {platform.machine()}"
+
+
+DEVICE_MODEL = get_device_model()
 
 browser = 'firefox'
 browser_flags = '--kiosk'
