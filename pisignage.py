@@ -290,32 +290,12 @@ def main():
                 commandFile = response.json()['scriptPath']
                 commandFlags = response.json()['contentPath']
                 if status != previous_status:
-                    recentLogs(f"Executing command: {commandFlags}")
+                    recentLogs("do command things")
                     if commandFlags == "Restart":
-                        recentLogs("Rebooting Pi...")
                         os.system("sudo reboot")
-                    elif commandFlags == "RestartProcess":
-                        recentLogs("Restarting piman service...")
-                        os.system("systemctl --user restart piman.service")
-                    elif commandFlags == "TurnOnTV":
-                        recentLogs("Turning on TV...")
-                        os.system("echo 'on 0' | cec-client -s -d 1 && sleep 10 && echo 'as' | cec-client -s -d 1")
-                    elif commandFlags == "TurnOffTV":
-                        recentLogs("Turning off TV...")
-                        os.system("echo 'standby 0' | cec-client -s -d 1")
-                    elif commandFlags == "RotatePortraitLeft":
-                        recentLogs("Rotating display portrait left (90°)...")
-                        os.system("wlr-randr --output HDMI-A-1 --transform 90")
-                    elif commandFlags == "RotateLandscape":
-                        recentLogs("Rotating display landscape (normal)...")
-                        os.system("wlr-randr --output HDMI-A-1 --transform normal")
-                    elif commandFlags == "RotatePortraitRight":
-                        recentLogs("Rotating display portrait right (270°)...")
-                        os.system("wlr-randr --output HDMI-A-1 --transform 270")
-                    else:
-                        recentLogs(f"Unknown command: {commandFlags}")
-                recentLogs(f"Command Flags: {commandFlags}")
-                recentLogs(f"Command File: {commandFile}")
+                if status != previous_status:
+                    recentLogs(f"Command Flags: {commandFlags}")
+                    recentLogs(f"Command File: {commandFile}")
 
             # We don't want the pi to update on every loop if content is the same.
             elif status == "NoChange":
