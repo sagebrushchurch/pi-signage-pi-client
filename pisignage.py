@@ -24,7 +24,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.5.0'
+PI_CLIENT_VERSION = '2.6.0'
 
 
 def get_device_model():
