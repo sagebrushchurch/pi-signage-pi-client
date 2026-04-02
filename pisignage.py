@@ -24,7 +24,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.6.0'
+PI_CLIENT_VERSION = '2.7.0'
 
 
 def get_device_model():
@@ -326,7 +326,7 @@ def getLoadAverages():
     return loadAvg
 
 def getUptime():
-    """gets the uptime from /proc/uptime"""
+    """gets the uptime from /proc/uptime and returns a human-readable string"""
 
     uptimeFull = subprocess.run([
         'cat',
@@ -334,9 +334,21 @@ def getUptime():
     ], stdout=subprocess.PIPE,
     )
 
-    uptime = uptimeFull.stdout.decode()
+    uptime_seconds = float(uptimeFull.stdout.decode().split()[0])
 
-    return uptime
+    days = int(uptime_seconds // 86400)
+    hours = int((uptime_seconds % 86400) // 3600)
+    minutes = int((uptime_seconds % 3600) // 60)
+
+    parts = []
+    if days > 0:
+        parts.append(f"{days} day{'s' if days != 1 else ''}")
+    if hours > 0:
+        parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+    if minutes > 0 or not parts:
+        parts.append(f"{minutes} minute{'s' if minutes != 1 else ''}")
+
+    return ", ".join(parts)
 
 SWAY_CONFIG_PATH = os.path.expanduser("~/.config/sway/config")
 
@@ -373,7 +385,6 @@ def main():
     recentLogs("Service Starting...")
 
     clearFiles()
-    uptime = getUptime()
     browserPID = None
     ipAddress = getIP()
     loadAvg = getLoadAverages()
@@ -388,6 +399,7 @@ def main():
     os.environ['XDG_RUNTIME_DIR'] = os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}')
 
     while True:
+        uptime = getUptime()
         if loopDelayCounter == 5:
             ipAddress = getIP()
             ScreenResolution = getScreenResolution()
