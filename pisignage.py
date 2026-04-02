@@ -375,6 +375,18 @@ def main():
                 if commandFlags == "Restart":
                     recentLogs("Rebooting...")
                     os.system("sudo reboot")
+                elif commandFlags == "RestartProcess":
+                    recentLogs("Restarting piman service...")
+                    os.system("systemctl --user restart piman.service")
+                elif commandFlags == "RotatePortraitLeft":
+                    recentLogs("Rotating screen portrait left (270)...")
+                    os.system("swaymsg output '*' transform 270")
+                elif commandFlags == "RotatePortraitRight":
+                    recentLogs("Rotating screen portrait right (90)...")
+                    os.system("swaymsg output '*' transform 90")
+                elif commandFlags == "RotateLandscape":
+                    recentLogs("Rotating screen landscape (0)...")
+                    os.system("swaymsg output '*' transform 0")
 
             # We don't want the pi to update on every loop if content is the same.
             elif status == "NoChange":
