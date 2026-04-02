@@ -291,11 +291,12 @@ def main():
                 commandFlags = response.json()['contentPath']
                 if status != previous_status:
                     recentLogs("do command things")
-                    if commandFlags == "Restart":
-                        os.system("sudo reboot")
-                if status != previous_status:
                     recentLogs(f"Command Flags: {commandFlags}")
                     recentLogs(f"Command File: {commandFile}")
+                # Execute command every loop, not just on status change
+                if commandFlags == "Restart":
+                    recentLogs("Rebooting...")
+                    os.system("sudo reboot")
 
             # We don't want the pi to update on every loop if content is the same.
             elif status == "NoChange":
