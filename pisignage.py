@@ -426,6 +426,7 @@ def main():
         parameters["hardware"] = DEVICE_MODEL
         parameters["screenRes"] = ScreenResolution
         parameters["clientVersion"] = PI_CLIENT_VERSION
+        parameters["os"] = platform.platform()
 
         try:
             # timeout=None cuz in some cases the posts would time out.
