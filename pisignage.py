@@ -24,7 +24,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.7.0'
+PI_CLIENT_VERSION = '2.8.0'
 
 
 def get_device_model():
@@ -76,6 +76,30 @@ def get_device_model():
 
 
 DEVICE_MODEL = get_device_model()
+
+
+def get_os_info():
+    """Return a concise OS description, e.g. 'Debian 12' or 'Ubuntu 24.04'."""
+    try:
+        with open('/etc/os-release', 'r') as f:
+            info = {}
+            for line in f:
+                line = line.strip()
+                if '=' in line:
+                    key, _, value = line.partition('=')
+                    info[key] = value.strip('"')
+        name = info.get('NAME', '').replace('GNU/Linux', '').strip()
+        version = info.get('VERSION_ID', '')
+        if name and version:
+            return f"{name} {version}"
+        elif name:
+            return name
+    except OSError:
+        pass
+    return f"{platform.system()} {platform.release()}"
+
+
+OS_INFO = get_os_info()
 
 browser = 'firefox'
 browser_flags = '--kiosk'
@@ -426,6 +450,7 @@ def main():
         parameters["hardware"] = DEVICE_MODEL
         parameters["screenRes"] = ScreenResolution
         parameters["clientVersion"] = PI_CLIENT_VERSION
+        parameters["os"] = OS_INFO
         parameters["os"] = platform.platform()
 
         try:
