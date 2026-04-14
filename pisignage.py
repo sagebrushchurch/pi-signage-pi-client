@@ -204,12 +204,17 @@ def linkPID():
     return pid
 
 def imagePID():
-    pid = subprocess.Popen([browser,
-                            browser_flags,
+    pid = subprocess.Popen([
+                            "mpv",
+                            "--fs",
+                            "--no-border",
+                            "--osd-level=0",
+                            "--no-terminal",
+                            "--image-display-duration=inf",
                             "/tmp/signageFile"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
-    recentLogs("Image detected. Launching Firefox.")
+    recentLogs("Image detected. Launching mpv.")
     return pid
 
 def otherFilePID():
@@ -222,15 +227,16 @@ def otherFilePID():
     return pid
 
 def startDisplay(controlFile, signageFile):
-    """Starts firefox running the media content passed by signageFile
-    and run using controlFile
+    """Starts the appropriate player for the media content passed by signageFile.
+    Videos and audio use mpv, still images use mpv with --image-display-duration=inf,
+    and webpages use firefox.
 
     Args:
         controlFile (str): path to file that controls how media is played
         signageFile (str): path to media file
 
     Returns:
-        PID: process object from spawning firefox
+        PID: process object from spawning the player
     """
     recentLogs("Downloading Signage File")
     downloadFile(signageFile, '/tmp/signageFile')
@@ -569,10 +575,10 @@ def main():
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
             time.sleep(30)
         except psutil.NoSuchProcess:
-            # Sometimes firefox's pid changes, I think it's cuz of the redirect for webpage viewing but
+            # Sometimes the player's pid changes (e.g. firefox redirects for webpage viewing)
             # this catches it and another loop fixes it when it happens, so just loop again quickly
             time.sleep(1)
-            recentLogs("firefox pid lost, restarting")
+            recentLogs("player pid lost, restarting")
         except Exception as e:
             # General exception so that loop never crashes out, it will print it to the logs
             recentLogs('type is: ' + e.__class__.__name__)
