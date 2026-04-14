@@ -159,61 +159,39 @@ def kill(proc_pid):
     process.kill()
 
 # Define various pids
-def get_ffmpeg_version():
-    """Get FFmpeg version to determine codec compatibility"""
-    try:
-        result = subprocess.run(['ffmpeg', '-version'], 
-                              capture_output=True, text=True, timeout=5, check=False)
-        version_line = result.stdout.split('\n')[0]
-        # Extract version number (e.g., "ffmpeg version 7.1.2" -> "7.1.2")
-        version_str = version_line.split()[2]
-        major_version = int(version_str.split('.')[0])
-        return major_version
-    except (subprocess.TimeoutExpired, IndexError, ValueError, OSError):
-        recentLogs("Could not detect FFmpeg version, assuming v5 compatibility")
-        return 5
-
-def get_video_codec():
-    """Detect video codec of the file"""
-    try:
-        result = subprocess.run(['ffprobe', '-v', 'quiet', '-select_streams', 'v:0',
-                               '-show_entries', 'stream=codec_name', '-of', 
-                               'csv=p=0', '/tmp/signageFile'], 
-                              capture_output=True, text=True, timeout=5, check=False)
-        codec = result.stdout.strip()
-        return codec if codec else None
-    except (subprocess.TimeoutExpired, OSError):
-        recentLogs("Could not detect video codec, using default playback")
-        return None
-
 def avPID():
-    ffmpeg_version = get_ffmpeg_version()
-    video_codec = get_video_codec()
-    
-    # Base ffplay command
-    cmd = ["ffplay", "-i", "/tmp/signageFile", "-loop", "0", "-fs", "-fast"]
-    
-    # For FFmpeg v7+, add hardware decoding if available
-    if ffmpeg_version >= 7 and video_codec:
-        if video_codec in ['h264']:
-            # Use V4L2 M2M hardware decoder for H.264
-            cmd.insert(1, "-c:v")
-            cmd.insert(2, "h264_v4l2m2m")
-            recentLogs(f"Using H.264 hardware decoding for FFmpeg v{ffmpeg_version}")
-        elif video_codec in ['hevc', 'h265']:
-            # Use V4L2 M2M hardware decoder for H.265/HEVC
-            cmd.insert(1, "-c:v")
-            cmd.insert(2, "hevc_v4l2m2m")
-            recentLogs(f"Using H.265/HEVC hardware decoding for FFmpeg v{ffmpeg_version}")
-        else:
-            recentLogs(f"No hardware decoder available for codec {video_codec}, using software decoding")
-    elif ffmpeg_version >= 7:
-        recentLogs(f"FFmpeg v{ffmpeg_version} detected, but codec detection failed - using software decoding")
+    """Launch mpv for audio/video playback with hardware acceleration where available.
+
+    Hardware decoder selection:
+      - x86_64 : --hwdec=auto  (tries vaapi, nvdec, vdpau, etc. in order)
+      - aarch64 / armv7l (Raspberry Pi 4/5): --hwdec=v4l2m2m
+      - anything else: software decoding
+    """
+    arch = platform.machine()
+
+    cmd = [
+        "mpv",
+        "--loop=inf",
+        "--fs",
+        "--no-border",
+        "--osd-level=0",
+        "--no-terminal",
+    ]
+
+    if arch == 'x86_64':
+        cmd.append("--hwdec=auto")
+        recentLogs("Using auto hardware decoding for x86_64")
+    elif arch in ('aarch64', 'armv7l'):
+        cmd.append("--hwdec=v4l2m2m")
+        recentLogs("Using V4L2 M2M hardware decoding for ARM")
     else:
-        recentLogs(f"FFmpeg v{ffmpeg_version} detected, using compatible software decoding")
-    
+        cmd.append("--hwdec=no")
+        recentLogs(f"Unknown arch {arch}, using software decoding")
+
+    cmd.append("/tmp/signageFile")
+
     pid = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-    recentLogs("Launching ffmpeg for audio/video file.")
+    recentLogs("Launching mpv for audio/video file.")
     return pid
 
 def linkPID():
@@ -271,9 +249,25 @@ def startDisplay(controlFile, signageFile):
                 # 3.8GB in bytes to account for system reserved memory on 4GB modules
                 min_ram = 3.8 * 1024 * 1024 * 1024
                 ram = psutil.virtual_memory().total
-                
-                if arch != 'x86_64' or ram < min_ram:
-                    recentLogs(f"Skipping video: Arch={arch}, RAM={ram/(1024**3):.1f}GB. Need x86_64 & 4GB+")
+
+                # Capable devices: x86_64 with ≥4 GB RAM, or Raspberry Pi 4/5
+                # (Pi 4/5 have hardware video decoders; Pi 3 and earlier are too slow)
+                # DEVICE_MODEL contains the full model string (e.g. "Raspberry Pi 4 Model B"),
+                # so substring matching with 'in' intentionally catches all Pi 4/5 variants.
+                # RAM is not gated for Pi 4/5 because mpv's V4L2 M2M hardware decoder
+                # uses very little system memory even on 1 GB configurations.
+                is_capable_x86 = (arch == 'x86_64' and ram >= min_ram)
+                is_pi4_or_newer = (
+                    'Raspberry Pi 4' in DEVICE_MODEL or
+                    'Raspberry Pi 5' in DEVICE_MODEL
+                )
+
+                if not (is_capable_x86 or is_pi4_or_newer):
+                    recentLogs(
+                        f"Skipping video: Device={DEVICE_MODEL}, "
+                        f"Arch={arch}, RAM={ram/(1024**3):.1f}GB. "
+                        f"Need x86_64 with {min_ram/(1024**3):.1f}GB RAM or Raspberry Pi 4/5."
+                    )
                     return None
             pid = avPID()
 
