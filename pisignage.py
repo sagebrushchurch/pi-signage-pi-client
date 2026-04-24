@@ -24,7 +24,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.8.1'
+PI_CLIENT_VERSION = '2.8.2'
 
 
 def get_device_model():
@@ -274,7 +274,7 @@ def startDisplay(controlFile, signageFile):
                 
                 if arch != 'x86_64' or ram < min_ram:
                     recentLogs(f"Skipping video: Arch={arch}, RAM={ram/(1024**3):.1f}GB. Need x86_64 & 4GB+. Showing fallback image.")
-                    wget.download('https://piman.sagebrush.work/pi_manager_api/media/Content_69eab3397e544073d0feeaae.jpg', out='/tmp/signageFile')
+                    downloadFile('https://piman.sagebrush.work/pi_manager_api/media/Content_69eab3397e544073d0feeaae.jpg', '/tmp/signageFile')
                     pid = imagePID()
                     return pid
             pid = avPID()
