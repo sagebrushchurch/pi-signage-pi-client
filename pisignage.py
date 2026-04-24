@@ -273,8 +273,10 @@ def startDisplay(controlFile, signageFile):
                 ram = psutil.virtual_memory().total
                 
                 if arch != 'x86_64' or ram < min_ram:
-                    recentLogs(f"Skipping video: Arch={arch}, RAM={ram/(1024**3):.1f}GB. Need x86_64 & 4GB+")
-                    return None
+                    recentLogs(f"Skipping video: Arch={arch}, RAM={ram/(1024**3):.1f}GB. Need x86_64 & 4GB+. Showing fallback image.")
+                    wget.download('https://piman.sagebrush.work/pi_manager_api/media/Content_69eab3397e544073d0feeaae.jpg', out='/tmp/signageFile')
+                    pid = imagePID()
+                    return pid
             pid = avPID()
 
         # Probably a webpage
