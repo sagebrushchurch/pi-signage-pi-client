@@ -186,12 +186,15 @@ def get_video_codec():
         recentLogs("Could not detect video codec, using default playback")
         return None
 
-def avPID():
+def avPID(is_audio=False):
     ffmpeg_version = get_ffmpeg_version()
     video_codec = get_video_codec()
     
-    # Base ffplay command
-    cmd = ["ffplay", "-i", "/tmp/signageFile", "-loop", "0", "-fs", "-fast"]
+    # Base ffplay command — audio-only files don't need a display
+    if is_audio:
+        cmd = ["ffplay", "-i", "/tmp/signageFile", "-loop", "0", "-nodisp"]
+    else:
+        cmd = ["ffplay", "-i", "/tmp/signageFile", "-loop", "0", "-fs", "-fast"]
     
     # For FFmpeg v7+, add hardware decoding if available
     if ffmpeg_version >= 7 and video_codec:
@@ -277,7 +280,7 @@ def startDisplay(controlFile, signageFile):
                     downloadFile('https://piman.sagebrush.work/pi_manager_api/media/Content_69eab3397e544073d0feeaae.jpg', '/tmp/signageFile')
                     pid = imagePID()
                     return pid
-            pid = avPID()
+            pid = avPID(is_audio='audio' in fileType and 'video' not in fileType)
 
         # Probably a webpage
         elif 'html' in fileType:
@@ -533,24 +536,27 @@ def main():
                 browserPID = startDisplay(controlFile, signageFile)
             # Take a screenshot of the display
             ssPath = f"/tmp/{piName}.png"
+            screenshot_taken = False
             try:
                 subprocess.run(['grim',
                             ssPath],
                             capture_output=True,
                             text=True,
                             check=True)
+                screenshot_taken = True
             except subprocess.CalledProcessError as e:
                 recentLogs(f"Error taking screenshot: {e}")
                 recentLogs(f"Error output: {e.stderr}")
-            # Build data object to upload screenshot to server
-            data = {'piName': piName}
-            with open(ssPath, 'rb') as ssFile:
-                files = {'file': ssFile}
-                # Longer timeout for image file upload
-                httpx.post(f'{BASE_URL}/UploadPiScreenshot',
-                           data=data,
-                           files=files,
-                           timeout=10)
+            # Only upload screenshot if grim succeeded
+            if screenshot_taken:
+                data = {'piName': piName}
+                with open(ssPath, 'rb') as ssFile:
+                    files = {'file': ssFile}
+                    # Longer timeout for image file upload
+                    httpx.post(f'{BASE_URL}/UploadPiScreenshot',
+                               data=data,
+                               files=files,
+                               timeout=10)
             # Main loop speed control
             time.sleep(30)
 
