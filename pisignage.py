@@ -24,7 +24,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.8.3b'
+PI_CLIENT_VERSION = '2.8.4b'
 
 
 def get_device_model():
@@ -186,6 +186,26 @@ def get_video_codec():
         recentLogs("Could not detect video codec, using default playback")
         return None
 
+def get_usb_audio_card():
+    """Detect the first USB audio card number from /proc/asound/cards.
+
+    Returns:
+        int or None: ALSA card number of the USB audio device, or None if not found.
+    """
+    try:
+        with open('/proc/asound/cards', 'r') as f:
+            content = f.read()
+        # Each card entry spans two lines; the first line has the card number
+        # e.g. " 1 [Device]: USB-Audio - USB Audio Device"
+        for line in content.splitlines():
+            if 'USB' in line.upper():
+                match = re.match(r'^\s*(\d+)\s+\[', line)
+                if match:
+                    return int(match.group(1))
+    except OSError:
+        pass
+    return None
+
 def avPID(is_audio=False):
     ffmpeg_version = get_ffmpeg_version()
     video_codec = get_video_codec()
@@ -215,7 +235,17 @@ def avPID(is_audio=False):
     else:
         recentLogs(f"FFmpeg v{ffmpeg_version} detected, using compatible software decoding")
     
-    pid = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    # Dynamically select USB audio output if one is present
+    env = os.environ.copy()
+    usb_card = get_usb_audio_card()
+    if usb_card is not None:
+        env['SDL_AUDIODRIVER'] = 'alsa'
+        env['AUDIODEV'] = f'hw:{usb_card},0'
+        recentLogs(f"USB audio device detected on card {usb_card}, routing audio to hw:{usb_card},0")
+    else:
+        recentLogs("No USB audio device found, using default audio output")
+
+    pid = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, env=env)
     recentLogs("Launching ffmpeg for audio/video file.")
     return pid
 
