@@ -3,6 +3,7 @@ Sends name and checksum to server and
 server returns what content the pi should be displaying
 """
 from traceback import print_exc
+from functools import lru_cache
 import subprocess
 import datetime
 import hashlib
@@ -14,6 +15,7 @@ import wget
 # import gi
 import os
 import platform
+import re
 
 # gi.require_version('Gdk', '3.0')
 # from gi.repository import Gdk
@@ -171,6 +173,39 @@ def get_video_codec():
         recentLogs("Could not detect video codec, using default playback")
         return None
 
+@lru_cache(maxsize=None)
+def has_v4l2_m2m_decoder(decoder_name):
+    """Check whether the requested V4L2 M2M decoder is usable on this system."""
+    try:
+        has_v4l2_device = False
+        for entry in os.listdir('/sys/class/video4linux'):
+            if not re.fullmatch(r'video\d+', entry):
+                continue
+
+            name_path = os.path.join('/sys/class/video4linux', entry, 'name')
+            try:
+                with open(name_path, 'r') as name_file:
+                    device_name = name_file.read().strip().lower()
+            except OSError:
+                continue
+
+            if any(token in device_name for token in ['codec', 'm2m', 'rpivid']):
+                has_v4l2_device = True
+                break
+    except OSError:
+        has_v4l2_device = False
+
+    if not has_v4l2_device:
+        return False
+
+    try:
+        result = subprocess.run(['ffmpeg', '-hide_banner', '-decoders'],
+                              capture_output=True, text=True, timeout=5, check=False)
+        return re.search(rf'^\s*[A-Z\.]+\s+{re.escape(decoder_name)}\b',
+                         result.stdout, re.MULTILINE) is not None
+    except (subprocess.TimeoutExpired, OSError):
+        return False
+
 def get_usb_audio_card():
     """Detect the first USB audio card number from /proc/asound/cards.
 
@@ -203,16 +238,20 @@ def avPID(is_audio=False):
     
     # For FFmpeg v7+, add hardware decoding if available
     if ffmpeg_version >= 7 and video_codec:
+        decoder_name = None
         if video_codec in ['h264']:
             # Use V4L2 M2M hardware decoder for H.264
-            cmd.insert(1, "-c:v")
-            cmd.insert(2, "h264_v4l2m2m")
-            recentLogs(f"Using H.264 hardware decoding for FFmpeg v{ffmpeg_version}")
+            decoder_name = "h264_v4l2m2m"
         elif video_codec in ['hevc', 'h265']:
             # Use V4L2 M2M hardware decoder for H.265/HEVC
+            decoder_name = "hevc_v4l2m2m"
+
+        if decoder_name and has_v4l2_m2m_decoder(decoder_name):
             cmd.insert(1, "-c:v")
-            cmd.insert(2, "hevc_v4l2m2m")
-            recentLogs(f"Using H.265/HEVC hardware decoding for FFmpeg v{ffmpeg_version}")
+            cmd.insert(2, decoder_name)
+            recentLogs(f"Using {video_codec.upper()} hardware decoding for FFmpeg v{ffmpeg_version}")
+        elif decoder_name:
+            recentLogs(f"{decoder_name} is not available on this system, using software decoding")
         else:
             recentLogs(f"No hardware decoder available for codec {video_codec}, using software decoding")
     elif ffmpeg_version >= 7:
