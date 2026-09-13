@@ -26,7 +26,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.8.5'
+PI_CLIENT_VERSION = '2.9.0'
 
 
 def get_device_model():
@@ -333,7 +333,7 @@ def getLoadAverages():
     return loadAvg
 
 def getUptime():
-    """gets the uptime from /proc/uptime"""
+    """gets the system uptime and returns it as a human-readable string, e.g. '2 days, 3 hours, 15 minutes'"""
 
     uptimeFull = subprocess.run([
         'cat',
@@ -341,9 +341,22 @@ def getUptime():
     ], stdout=subprocess.PIPE,
     )
 
-    uptime = uptimeFull.stdout.decode()
+    # First value is uptime in seconds, second is idle time; we only need uptime.
+    uptimeSeconds = int(float(uptimeFull.stdout.decode().split()[0]))
 
-    return uptime
+    days, remainder = divmod(uptimeSeconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, _ = divmod(remainder, 60)
+
+    parts = []
+    if days:
+        parts.append(f"{days} day{'s' if days != 1 else ''}")
+    if hours:
+        parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+    if minutes or not parts:
+        parts.append(f"{minutes} minute{'s' if minutes != 1 else ''}")
+
+    return ', '.join(parts)
 
 def main():
     """pisignage control, pings server to check content schedule, downloading new content when
