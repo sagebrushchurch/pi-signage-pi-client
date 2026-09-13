@@ -10,7 +10,7 @@ import psutil
 import httpx
 import magic
 import time
-import re
+import wget
 # import gi
 import os
 import platform
@@ -105,21 +105,6 @@ browser = 'firefox'
 browser_flags = '--kiosk'
 logList = []
 sessionType = ""
-
-def downloadFile(url, dest):
-    """Download a file from url to dest using a streaming request with a timeout.
-    Avoids hanging indefinitely on flaky networks, and handles large files without
-    loading them fully into memory.
-
-    Args:
-        url (str): URL to download from
-        dest (str): local file path to write to
-    """
-    with httpx.stream('GET', url, timeout=30, follow_redirects=True) as r:
-        r.raise_for_status()
-        with open(dest, 'wb') as f:
-            for chunk in r.iter_bytes():
-                f.write(chunk)
 
 def clearFiles():
     """clears all temp files used for playback, ensures nothing is re-used"""
@@ -288,10 +273,10 @@ def startDisplay(controlFile, signageFile):
         PID: process object from spawning firefox
     """
     recentLogs("Downloading Signage File")
-    downloadFile(signageFile, '/tmp/signageFile')
+    wget.download(signageFile, out='/tmp/signageFile')
     if not controlFile == '':
         recentLogs("Downloading Control File.")
-        downloadFile(controlFile, '/tmp/controlFile.html')
+        wget.download(controlFile, out='/tmp/controlFile.html')
     try:
         fileType = magic.from_file(
             '/tmp/signageFile', mime=True)
@@ -304,10 +289,9 @@ def startDisplay(controlFile, signageFile):
                 # 3.8GB in bytes to account for system reserved memory on 4GB modules
                 min_ram = 3.8 * 1024 * 1024 * 1024
                 ram = psutil.virtual_memory().total
-                
                 if arch != 'x86_64' or ram < min_ram:
                     recentLogs(f"Skipping video: Arch={arch}, RAM={ram/(1024**3):.1f}GB. Need x86_64 & 4GB+. Showing fallback image.")
-                    downloadFile('https://piman.sagebrush.work/pi_manager_api/media/Content_69eab3397e544073d0feeaae.jpg', '/tmp/signageFile')
+                    wget.download('https://piman.sagebrush.work/pi_manager_api/media/Content_69eab3397e544073d0feeaae.jpg', out='/tmp/signageFile')
                     pid = imagePID()
                     return pid
             pid = avPID(is_audio='audio' in fileType and 'video' not in fileType)
@@ -324,15 +308,12 @@ def startDisplay(controlFile, signageFile):
         else:
             if controlFile == '':
                 pid = otherFilePID()
-            else:
-                # If controlFile is not empty, we still need to assign pid
-                pid = otherFilePID()
 
         return pid
 
-    except Exception as e:
-        recentLogs(f"Could not access signageFile: {e}")
-        return None
+    except:
+        recentLogs("Could not access signageFile")
+        pass
 
 def recentLogs(logMessage: str):
     """keeps track of the previous 50 debug messages for sending to server
@@ -385,7 +366,7 @@ def getLoadAverages():
     return loadAvg
 
 def getUptime():
-    """gets the uptime from /proc/uptime and returns a human-readable string"""
+    """gets the uptime from /proc/uptime"""
 
     uptimeFull = subprocess.run([
         'cat',
@@ -393,47 +374,9 @@ def getUptime():
     ], stdout=subprocess.PIPE,
     )
 
-    uptime_seconds = float(uptimeFull.stdout.decode().split()[0])
+    uptime = uptimeFull.stdout.decode()
 
-    days = int(uptime_seconds // 86400)
-    hours = int((uptime_seconds % 86400) // 3600)
-    minutes = int((uptime_seconds % 3600) // 60)
-
-    parts = []
-    if days > 0:
-        parts.append(f"{days} day{'s' if days != 1 else ''}")
-    if hours > 0:
-        parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
-    if minutes > 0 or not parts:
-        parts.append(f"{minutes} minute{'s' if minutes != 1 else ''}")
-
-    return ", ".join(parts)
-
-SWAY_CONFIG_PATH = os.path.expanduser("~/.config/sway/config")
-
-def set_sway_transform(value):
-    """Persist an output transform in the Sway config file so it survives reboots.
-
-    Replaces any existing 'output * transform' line, or appends one if absent.
-    """
-    line = f"output * transform {value}\n"
-    pattern = re.compile(r"^\s*output\s+\*\s+transform\s+\S+.*$", re.MULTILINE)
-    try:
-        if os.path.exists(SWAY_CONFIG_PATH):
-            with open(SWAY_CONFIG_PATH, "r") as f:
-                contents = f.read()
-            if pattern.search(contents):
-                contents = pattern.sub(f"output * transform {value}", contents)
-            else:
-                contents += line
-        else:
-            os.makedirs(os.path.dirname(SWAY_CONFIG_PATH), exist_ok=True)
-            contents = line
-        with open(SWAY_CONFIG_PATH, "w") as f:
-            f.write(contents)
-    except OSError as e:
-        recentLogs(f"Failed to update sway config: {e}")
-
+    return uptime
 
 def main():
     """pisignage control, pings server to check content schedule, downloading new content when
@@ -444,21 +387,20 @@ def main():
     recentLogs("Service Starting...")
 
     clearFiles()
+    uptime = getUptime()
     browserPID = None
     ipAddress = getIP()
     loadAvg = getLoadAverages()
     loopDelayCounter = 0
     ScreenResolution = getScreenResolution()
     timeSinceLastConnection = 0
-    networking_restarted = False
     previous_status = None
     default_hash = None
 
     os.environ['WAYLAND_DISPLAY'] = os.environ.get('WAYLAND_DISPLAY', 'wayland-1')
     os.environ['XDG_RUNTIME_DIR'] = os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}')
-
+    lastConnectFlagDefault = False
     while True:
-        uptime = getUptime()
         if loopDelayCounter == 5:
             ipAddress = getIP()
             ScreenResolution = getScreenResolution()
@@ -485,7 +427,6 @@ def main():
         parameters["hardware"] = DEVICE_MODEL
         parameters["screenRes"] = ScreenResolution
         parameters["clientVersion"] = PI_CLIENT_VERSION
-        parameters["os"] = OS_INFO
 
         try:
             # timeout=None cuz in some cases the posts would time out.
@@ -495,12 +436,6 @@ def main():
 
             # Check for status of 2XX in httpx response
             response.raise_for_status()
-
-            # Reset failure counter as soon as the main server connection is confirmed.
-            # Keeping this here (not near the screenshot upload) means a failed
-            # screenshot upload cannot falsely count as a server connection failure.
-            timeSinceLastConnection = 0
-            networking_restarted = False
 
             status = response.json()['status']
             # Only log if status has changed
@@ -514,27 +449,11 @@ def main():
                 commandFlags = response.json()['contentPath']
                 if status != previous_status:
                     recentLogs("do command things")
+                    if commandFlags == "Restart":
+                        os.system("sudo reboot")
+                if status != previous_status:
                     recentLogs(f"Command Flags: {commandFlags}")
                     recentLogs(f"Command File: {commandFile}")
-                # Execute command every loop, not just on status change
-                if commandFlags == "Restart":
-                    recentLogs("Rebooting...")
-                    os.system("sudo reboot")
-                elif commandFlags == "RestartProcess":
-                    recentLogs("Restarting piman service...")
-                    os.system("systemctl --user restart piman.service")
-                elif commandFlags == "RotatePortraitLeft":
-                    recentLogs("Rotating screen portrait left (270)...")
-                    if os.system("swaymsg output '*' transform 270") == 0:
-                        set_sway_transform(270)
-                elif commandFlags == "RotatePortraitRight":
-                    recentLogs("Rotating screen portrait right (90)...")
-                    if os.system("swaymsg output '*' transform 90") == 0:
-                        set_sway_transform(90)
-                elif commandFlags == "RotateLandscape":
-                    recentLogs("Rotating screen landscape (0)...")
-                    if os.system("swaymsg output '*' transform 0") == 0:
-                        set_sway_transform(0)
 
             # We don't want the pi to update on every loop if content is the same.
             elif status == "NoChange":
@@ -548,7 +467,7 @@ def main():
                     clearFiles()
                     # Pull Default ONCE
                     signageFile = response.json()['contentPath']
-                    downloadFile(signageFile, '/tmp/signageFile')
+                    wget.download(signageFile, out='/tmp/signageFile')
                     hash = md5checksum('/tmp/signageFile')
                     # Close the browser
                     if browserPID:
@@ -596,20 +515,11 @@ def main():
         except httpx.HTTPError as http_exc:
             recentLogs(f"HTTP Error: {http_exc}")
             print(f"HTTP Error: {http_exc}")
+            # # At each failed response add 1 attempt to the tally
+            # # After 60 failed attempts (0.5 hours), restart networking and piman service
             timeSinceLastConnection += 1
-            # After 60 consecutive failed attempts (~30 min), restart networking once.
-            # The >= check with a flag ensures this fires exactly once even if the
-            # counter skips a value. This process (piman.service) keeps running after
-            # the restart, so the counter continues to increment if not restored.
-            if timeSinceLastConnection >= 60 and not networking_restarted:
-                networking_restarted = True
-                recentLogs("Lost connection for 30 minutes, restarting networking...")
-                os.system('sudo systemctl restart networking')
-            # After 120 consecutive failed attempts (~60 min), networking restart did
-            # not restore connectivity — escalate to a full reboot.
-            elif timeSinceLastConnection >= 120:
-                recentLogs("Lost connection for 60 minutes, rebooting...")
-                os.system('sudo reboot')
+            if timeSinceLastConnection >= 60:
+                os.system('sudo systemctl restart networking && systemctl --user restart piman.service ')
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
             time.sleep(30)
         except psutil.NoSuchProcess:
