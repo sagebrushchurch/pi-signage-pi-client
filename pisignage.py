@@ -175,7 +175,21 @@ def get_video_codec():
 def has_v4l2_m2m_decoder(decoder_name):
     """Check whether the requested V4L2 M2M decoder is usable on this system."""
     try:
-        has_v4l2_device = any(re.fullmatch(r'video1\d', entry) for entry in os.listdir('/dev'))
+        has_v4l2_device = False
+        for entry in os.listdir('/sys/class/video4linux'):
+            if not re.fullmatch(r'video\d+', entry):
+                continue
+
+            name_path = os.path.join('/sys/class/video4linux', entry, 'name')
+            try:
+                with open(name_path, 'r') as name_file:
+                    device_name = name_file.read().strip().lower()
+            except OSError:
+                continue
+
+            if any(token in device_name for token in ['codec', 'm2m', 'rpivid']):
+                has_v4l2_device = True
+                break
     except OSError:
         has_v4l2_device = False
 
