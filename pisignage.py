@@ -3,6 +3,7 @@ Sends name and checksum to server and
 server returns what content the pi should be displaying
 """
 from traceback import print_exc
+from functools import lru_cache
 import subprocess
 import datetime
 import hashlib
@@ -172,6 +173,7 @@ def get_video_codec():
         recentLogs("Could not detect video codec, using default playback")
         return None
 
+@lru_cache(maxsize=None)
 def has_v4l2_m2m_decoder(decoder_name):
     """Check whether the requested V4L2 M2M decoder is usable on this system."""
     try:
