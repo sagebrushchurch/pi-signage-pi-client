@@ -26,7 +26,7 @@ if '-dev-' in PI_NAME.lower():
 else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
-PI_CLIENT_VERSION = '2.8.5'
+PI_CLIENT_VERSION = '2.9.0'
 
 
 def get_device_model():
@@ -146,131 +146,39 @@ def kill(proc_pid):
     process.kill()
 
 # Define various pids
-def get_ffmpeg_version():
-    """Get FFmpeg version to determine codec compatibility"""
-    try:
-        result = subprocess.run(['ffmpeg', '-version'], 
-                              capture_output=True, text=True, timeout=5, check=False)
-        version_line = result.stdout.split('\n')[0]
-        # Extract version number (e.g., "ffmpeg version 7.1.2" -> "7.1.2")
-        version_str = version_line.split()[2]
-        major_version = int(version_str.split('.')[0])
-        return major_version
-    except (subprocess.TimeoutExpired, IndexError, ValueError, OSError):
-        recentLogs("Could not detect FFmpeg version, assuming v5 compatibility")
-        return 5
+def avPID():
+    """Launch mpv for audio/video playback with hardware acceleration where available.
 
-def get_video_codec():
-    """Detect video codec of the file"""
-    try:
-        result = subprocess.run(['ffprobe', '-v', 'quiet', '-select_streams', 'v:0',
-                               '-show_entries', 'stream=codec_name', '-of', 
-                               'csv=p=0', '/tmp/signageFile'], 
-                              capture_output=True, text=True, timeout=5, check=False)
-        codec = result.stdout.strip()
-        return codec if codec else None
-    except (subprocess.TimeoutExpired, OSError):
-        recentLogs("Could not detect video codec, using default playback")
-        return None
-
-@lru_cache(maxsize=None)
-def has_v4l2_m2m_decoder(decoder_name):
-    """Check whether the requested V4L2 M2M decoder is usable on this system."""
-    try:
-        has_v4l2_device = False
-        for entry in os.listdir('/sys/class/video4linux'):
-            if not re.fullmatch(r'video\d+', entry):
-                continue
-
-            name_path = os.path.join('/sys/class/video4linux', entry, 'name')
-            try:
-                with open(name_path, 'r') as name_file:
-                    device_name = name_file.read().strip().lower()
-            except OSError:
-                continue
-
-            if any(token in device_name for token in ['codec', 'm2m', 'rpivid']):
-                has_v4l2_device = True
-                break
-    except OSError:
-        has_v4l2_device = False
-
-    if not has_v4l2_device:
-        return False
-
-    try:
-        result = subprocess.run(['ffmpeg', '-hide_banner', '-decoders'],
-                              capture_output=True, text=True, timeout=5, check=False)
-        return re.search(rf'^\s*[A-Z\.]+\s+{re.escape(decoder_name)}\b',
-                         result.stdout, re.MULTILINE) is not None
-    except (subprocess.TimeoutExpired, OSError):
-        return False
-
-def get_usb_audio_card():
-    """Detect the first USB audio card number from /proc/asound/cards.
-
-    Returns:
-        int or None: ALSA card number of the USB audio device, or None if not found.
+    Hardware decoder selection:
+      - x86_64 : --hwdec=auto  (tries vaapi, nvdec, vdpau, etc. in order)
+      - aarch64 / armv7l (Raspberry Pi 4/5): --hwdec=v4l2m2m
+      - anything else: software decoding
     """
-    try:
-        with open('/proc/asound/cards', 'r') as f:
-            content = f.read()
-        # Each card entry spans two lines; the first line has the card number
-        # e.g. " 1 [Device]: USB-Audio - USB Audio Device"
-        for line in content.splitlines():
-            if 'USB' in line.upper():
-                match = re.match(r'^\s*(\d+)\s+\[', line)
-                if match:
-                    return int(match.group(1))
-    except OSError:
-        pass
-    return None
+    arch = platform.machine()
 
-def avPID(is_audio=False):
-    ffmpeg_version = get_ffmpeg_version()
-    video_codec = get_video_codec()
-    
-    # Base ffplay command — audio-only files don't need a display
-    if is_audio:
-        cmd = ["ffplay", "-i", "/tmp/signageFile", "-loop", "0", "-nodisp"]
-    else:
-        cmd = ["ffplay", "-i", "/tmp/signageFile", "-loop", "0", "-fs", "-fast"]
-    
-    # For FFmpeg v7+, add hardware decoding if available
-    if ffmpeg_version >= 7 and video_codec:
-        decoder_name = None
-        if video_codec in ['h264']:
-            # Use V4L2 M2M hardware decoder for H.264
-            decoder_name = "h264_v4l2m2m"
-        elif video_codec in ['hevc', 'h265']:
-            # Use V4L2 M2M hardware decoder for H.265/HEVC
-            decoder_name = "hevc_v4l2m2m"
+    cmd = [
+        "mpv",
+        "--loop=inf",
+        "--fs",
+        "--no-border",
+        "--osd-level=0",
+        "--no-terminal",
+    ]
 
-        if decoder_name and has_v4l2_m2m_decoder(decoder_name):
-            cmd.insert(1, "-c:v")
-            cmd.insert(2, decoder_name)
-            recentLogs(f"Using {video_codec.upper()} hardware decoding for FFmpeg v{ffmpeg_version}")
-        elif decoder_name:
-            recentLogs(f"{decoder_name} is not available on this system, using software decoding")
-        else:
-            recentLogs(f"No hardware decoder available for codec {video_codec}, using software decoding")
-    elif ffmpeg_version >= 7:
-        recentLogs(f"FFmpeg v{ffmpeg_version} detected, but codec detection failed - using software decoding")
+    if arch == 'x86_64':
+        cmd.append("--hwdec=auto")
+        recentLogs("Using auto hardware decoding for x86_64")
+    elif arch in ('aarch64', 'armv7l'):
+        cmd.append("--hwdec=v4l2m2m")
+        recentLogs("Using V4L2 M2M hardware decoding for ARM")
     else:
-        recentLogs(f"FFmpeg v{ffmpeg_version} detected, using compatible software decoding")
-    
-    # Dynamically select USB audio output if one is present
-    env = os.environ.copy()
-    usb_card = get_usb_audio_card()
-    if usb_card is not None:
-        env['SDL_AUDIODRIVER'] = 'alsa'
-        env['AUDIODEV'] = f'hw:{usb_card},0'
-        recentLogs(f"USB audio device detected on card {usb_card}, routing audio to hw:{usb_card},0")
-    else:
-        recentLogs("No USB audio device found, using default audio output")
+        cmd.append("--hwdec=no")
+        recentLogs(f"Unknown arch {arch}, using software decoding")
 
-    pid = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, env=env)
-    recentLogs("Launching ffmpeg for audio/video file.")
+    cmd.append("/tmp/signageFile")
+
+    pid = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    recentLogs("Launching mpv for audio/video file.")
     return pid
 
 def linkPID():
@@ -283,12 +191,17 @@ def linkPID():
     return pid
 
 def imagePID():
-    pid = subprocess.Popen([browser,
-                            browser_flags,
+    pid = subprocess.Popen([
+                            "mpv",
+                            "--fs",
+                            "--no-border",
+                            "--osd-level=0",
+                            "--no-terminal",
+                            "--image-display-duration=inf",
                             "/tmp/signageFile"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
-    recentLogs("Image detected. Launching Firefox.")
+    recentLogs("Image detected. Launching mpv.")
     return pid
 
 def otherFilePID():
@@ -301,15 +214,16 @@ def otherFilePID():
     return pid
 
 def startDisplay(controlFile, signageFile):
-    """Starts firefox running the media content passed by signageFile
-    and run using controlFile
+    """Starts the appropriate player for the media content passed by signageFile.
+    Videos and audio use mpv, still images use mpv with --image-display-duration=inf,
+    and webpages use firefox.
 
     Args:
         controlFile (str): path to file that controls how media is played
         signageFile (str): path to media file
 
     Returns:
-        PID: process object from spawning firefox
+        PID: process object from spawning the player
     """
     recentLogs("Downloading Signage File")
     wget.download(signageFile, out='/tmp/signageFile')
@@ -328,12 +242,26 @@ def startDisplay(controlFile, signageFile):
                 # 3.8GB in bytes to account for system reserved memory on 4GB modules
                 min_ram = 3.8 * 1024 * 1024 * 1024
                 ram = psutil.virtual_memory().total
-                if arch != 'x86_64' or ram < min_ram:
-                    recentLogs(f"Skipping video: Arch={arch}, RAM={ram/(1024**3):.1f}GB. Need x86_64 & 4GB+. Showing fallback image.")
-                    wget.download('https://piman.sagebrush.work/pi_manager_api/media/Content_69eab3397e544073d0feeaae.jpg', out='/tmp/signageFile')
-                    pid = imagePID()
-                    return pid
-            pid = avPID(is_audio='audio' in fileType and 'video' not in fileType)
+                # Capable devices: x86_64 with ≥4 GB RAM, or Raspberry Pi 4/5
+                # (Pi 4/5 have hardware video decoders; Pi 3 and earlier are too slow)
+                # DEVICE_MODEL contains the full model string (e.g. "Raspberry Pi 4 Model B"),
+                # so substring matching with 'in' intentionally catches all Pi 4/5 variants.
+                # RAM is not gated for Pi 4/5 because mpv's V4L2 M2M hardware decoder
+                # uses very little system memory even on 1 GB configurations.
+                is_capable_x86 = (arch == 'x86_64' and ram >= min_ram)
+                is_pi4_or_newer = (
+                    'Raspberry Pi 4' in DEVICE_MODEL or
+                    'Raspberry Pi 5' in DEVICE_MODEL
+                )
+
+                if not (is_capable_x86 or is_pi4_or_newer):
+                    recentLogs(
+                        f"Skipping video: Device={DEVICE_MODEL}, "
+                        f"Arch={arch}, RAM={ram/(1024**3):.1f}GB. "
+                        f"Need x86_64 with {min_ram/(1024**3):.1f}GB RAM or Raspberry Pi 4/5."
+                    )
+                    return None
+            pid = avPID()
 
         # Probably a webpage
         elif 'html' in fileType:
@@ -405,7 +333,7 @@ def getLoadAverages():
     return loadAvg
 
 def getUptime():
-    """gets the uptime from /proc/uptime"""
+    """gets the system uptime and returns it as a human-readable string, e.g. '2 days, 3 hours, 15 minutes'"""
 
     uptimeFull = subprocess.run([
         'cat',
@@ -413,9 +341,22 @@ def getUptime():
     ], stdout=subprocess.PIPE,
     )
 
-    uptime = uptimeFull.stdout.decode()
+    # First value is uptime in seconds, second is idle time; we only need uptime.
+    uptimeSeconds = int(float(uptimeFull.stdout.decode().split()[0]))
 
-    return uptime
+    days, remainder = divmod(uptimeSeconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, _ = divmod(remainder, 60)
+
+    parts = []
+    if days:
+        parts.append(f"{days} day{'s' if days != 1 else ''}")
+    if hours:
+        parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+    if minutes or not parts:
+        parts.append(f"{minutes} minute{'s' if minutes != 1 else ''}")
+
+    return ', '.join(parts)
 
 def main():
     """pisignage control, pings server to check content schedule, downloading new content when
@@ -562,10 +503,10 @@ def main():
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
             time.sleep(30)
         except psutil.NoSuchProcess:
-            # Sometimes firefox's pid changes, I think it's cuz of the redirect for webpage viewing but
+            # Sometimes the player's pid changes (e.g. firefox redirects for webpage viewing)
             # this catches it and another loop fixes it when it happens, so just loop again quickly
             time.sleep(1)
-            recentLogs("firefox pid lost, restarting")
+            recentLogs("player pid lost, restarting")
         except Exception as e:
             # General exception so that loop never crashes out, it will print it to the logs
             recentLogs('type is: ' + e.__class__.__name__)
