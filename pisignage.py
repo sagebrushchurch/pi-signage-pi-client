@@ -3,7 +3,6 @@ Sends name and checksum to server and
 server returns what content the pi should be displaying
 """
 from traceback import print_exc
-from functools import lru_cache
 import subprocess
 import datetime
 import hashlib
@@ -15,7 +14,6 @@ import time
 # import gi
 import os
 import platform
-import re
 
 # gi.require_version('Gdk', '3.0')
 # from gi.repository import Gdk
@@ -79,34 +77,9 @@ def get_device_model():
 
 DEVICE_MODEL = get_device_model()
 
-
-def get_os_info():
-    """Return a concise OS description, e.g. 'Debian 12' or 'Ubuntu 24.04'."""
-    try:
-        with open('/etc/os-release', 'r') as f:
-            info = {}
-            for line in f:
-                line = line.strip()
-                if '=' in line:
-                    key, _, value = line.partition('=')
-                    info[key] = value.strip('"')
-        name = info.get('NAME', '').replace('GNU/Linux', '').strip()
-        version = info.get('VERSION_ID', '')
-        if name and version:
-            return f"{name} {version}"
-        elif name:
-            return name
-    except OSError:
-        pass
-    return f"{platform.system()} {platform.release()}"
-
-
-OS_INFO = get_os_info()
-
 browser = 'firefox'
 browser_flags = '--kiosk'
 logList = []
-sessionType = ""
 
 def clearFiles():
     """clears all temp files used for playback, ensures nothing is re-used"""
@@ -118,17 +91,23 @@ def clearFiles():
 
 def download_file(url, dest, timeout=15):
     """Download url to dest with a bounded timeout so a network stall can't hang the process forever.
+    Removes any partially written file on failure so a stale/corrupt file is never left behind.
 
     Args:
         url (str): file to download
         dest (str): local path to write to
         timeout (int): seconds to allow for the whole request/download
     """
-    with httpx.stream("GET", url, timeout=timeout, follow_redirects=True) as response:
-        response.raise_for_status()
-        with open(dest, "wb") as f:
-            for chunk in response.iter_bytes():
-                f.write(chunk)
+    try:
+        with httpx.stream("GET", url, timeout=timeout, follow_redirects=True) as response:
+            response.raise_for_status()
+            with open(dest, "wb") as f:
+                for chunk in response.iter_bytes():
+                    f.write(chunk)
+    except Exception:
+        if os.path.exists(dest):
+            os.remove(dest)
+        raise
 
 def sd_notify(state: str):
     """Send a message to systemd's sd_notify socket (readiness/watchdog); no-op if not running under systemd."""
@@ -160,9 +139,9 @@ def md5checksum(fname):
     md5 = hashlib.md5()
 
     # Handle content in binary form
-    f = open(fname, "rb")
-    while chunk := f.read(4096):
-        md5.update(chunk)
+    with open(fname, "rb") as f:
+        while chunk := f.read(4096):
+            md5.update(chunk)
 
     return md5.hexdigest()
 
@@ -305,14 +284,13 @@ def startDisplay(controlFile, signageFile):
 
         # Probably something broke
         else:
-            if controlFile == '':
-                pid = otherFilePID()
+            pid = otherFilePID() if controlFile == '' else None
 
         return pid
 
-    except:
-        recentLogs("Could not access signageFile")
-        pass
+    except Exception as e:
+        recentLogs(f"Could not access signageFile: {e}")
+        return None
 
 def recentLogs(logMessage: str):
     """keeps track of the previous 50 debug messages for sending to server
@@ -334,12 +312,15 @@ def recentLogs(logMessage: str):
     return logList
 
 def getIP():
-    ipAddressInfo = subprocess.run(
-        ['hostname',
-         '-I'],
-         stdout=subprocess.PIPE,
-         check=True)
-    ipAddress = ipAddressInfo.stdout.decode()
+    try:
+        ipAddressInfo = subprocess.run(
+            ['hostname',
+             '-I'],
+             stdout=subprocess.PIPE,
+             check=True)
+        ipAddress = ipAddressInfo.stdout.decode()
+    except (subprocess.CalledProcessError, OSError):
+        return ''
 
     return ipAddress
 
@@ -347,7 +328,7 @@ def getScreenResolution():
     try:
         resolution = subprocess.run(['/home/pi/pi-signage-pi-client/resolution.sh'],
             stdout=subprocess.PIPE, timeout=5).stdout.decode('utf-8')
-    except subprocess.TimeoutExpired:
+    except (subprocess.TimeoutExpired, OSError):
         return ''
 
     resolution = resolution.replace('\n', ' ')
@@ -356,28 +337,20 @@ def getScreenResolution():
 
 def getLoadAverages():
     """gets the load averages from /proc/loadavg"""
-
-    loadAvgFull = subprocess.run([
-        'cat',
-        '/proc/loadavg',
-        ], stdout=subprocess.PIPE,
-    )
-
-    loadAvg = loadAvgFull.stdout.decode()
-
-    return loadAvg
+    try:
+        with open('/proc/loadavg', 'r') as f:
+            return f.read()
+    except OSError:
+        return ''
 
 def getUptime():
     """gets the system uptime and returns it as a human-readable string, e.g. '2 days, 3 hours, 15 minutes'"""
 
-    uptimeFull = subprocess.run([
-        'cat',
-        '/proc/uptime',
-    ], stdout=subprocess.PIPE,
-    )
+    with open('/proc/uptime', 'r') as f:
+        uptimeContents = f.read()
 
     # First value is uptime in seconds, second is idle time; we only need uptime.
-    uptimeSeconds = int(float(uptimeFull.stdout.decode().split()[0]))
+    uptimeSeconds = int(float(uptimeContents.split()[0]))
 
     days, remainder = divmod(uptimeSeconds, 86400)
     hours, remainder = divmod(remainder, 3600)
@@ -410,11 +383,9 @@ def main():
     ScreenResolution = getScreenResolution()
     timeSinceLastConnection = 0
     previous_status = None
-    default_hash = None
 
     os.environ['WAYLAND_DISPLAY'] = os.environ.get('WAYLAND_DISPLAY', 'wayland-1')
     os.environ['XDG_RUNTIME_DIR'] = os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}')
-    lastConnectFlagDefault = False
     sd_notify('READY=1')
     while True:
         # Tells systemd's watchdog we're still alive; only reached once the previous
@@ -436,7 +407,7 @@ def main():
 
         # Build data parameters for server post request
         parameters = {}
-        piName = os.uname()[1]
+        piName = PI_NAME
         parameters["hash"] = hash
         parameters["load"] = loadAvg
         parameters["name"] = piName
@@ -448,8 +419,6 @@ def main():
         parameters["clientVersion"] = PI_CLIENT_VERSION
 
         try:
-            # timeout=None cuz in some cases the posts would time out.
-            # Might need to change to 5 seconds if going too long causes a crash.
             response = httpx.post(
                 f'{BASE_URL}/piConnect', json=parameters, timeout=5)
 
@@ -461,21 +430,8 @@ def main():
             if status != previous_status:
                 recentLogs(f"Status: {status}")
 
-            # Special case "command" keyword from scriptPath, causes pi to execute
-            # command script using flags included in contentPath.
-            if status == "Command":
-                commandFile = response.json()['scriptPath']
-                commandFlags = response.json()['contentPath']
-                if status != previous_status:
-                    recentLogs("do command things")
-                    if commandFlags == "Restart":
-                        os.system("sudo reboot")
-                if status != previous_status:
-                    recentLogs(f"Command Flags: {commandFlags}")
-                    recentLogs(f"Command File: {commandFile}")
-
             # We don't want the pi to update on every loop if content is the same.
-            elif status == "NoChange":
+            if status == "NoChange":
                 if status != previous_status:
                     recentLogs("No schedule change detected.")
 
@@ -541,7 +497,9 @@ def main():
             # # After 60 failed attempts (0.5 hours), restart networking and piman service
             timeSinceLastConnection += 1
             if timeSinceLastConnection >= 60:
-                os.system('sudo systemctl restart networking && systemctl --user restart piman.service ')
+                subprocess.run(['sudo', 'systemctl', 'restart', 'networking'])
+                subprocess.run(['systemctl', '--user', 'restart', 'piman.service'])
+                timeSinceLastConnection = 0
             print(f"Unable to reach piman. Current tally is {timeSinceLastConnection}")
             time.sleep(30)
         except psutil.NoSuchProcess:
