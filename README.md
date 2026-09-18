@@ -80,6 +80,22 @@ Notes:
 * `pisignage.py` resolves `resolution.sh` relative to the repository, so no host-specific
   `/home/pi/...` path is required in the container.
 
+### Docker Compose
+
+A [`docker-compose.yml`](docker-compose.yml) equivalent to the `docker run` command above is
+also included. Bash doesn't export its special `$UID`/`$GID` variables to child processes, so
+export them first:
+
+```bash
+export PISIGNAGE_UID="$(id -u)"
+export PISIGNAGE_GID="$(id -g)"
+
+docker compose up -d --build
+```
+
+It reads `WAYLAND_DISPLAY` and `XDG_RUNTIME_DIR` from your shell environment the same way the
+`docker run` example does, falling back to `wayland-1` if `WAYLAND_DISPLAY` isn't set.
+
 ### Running as a systemd service (with watchdog)
 
 The client is designed to run indefinitely under `systemd` as a `--user` service named

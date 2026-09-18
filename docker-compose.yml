@@ -1,0 +1,23 @@
+services:
+  pi-signage-client:
+    build: .
+    image: pi-signage-client
+    container_name: pi-signage-client
+    restart: unless-stopped
+    network_mode: host
+    # bash's $UID/$GID aren't exported to child processes by default;
+    # export PISIGNAGE_UID/PISIGNAGE_GID (or set them in a .env file) before running.
+    user: "${PISIGNAGE_UID:-1000}:${PISIGNAGE_GID:-1000}"
+    group_add:
+      - audio
+      - video
+    environment:
+      WAYLAND_DISPLAY: "${WAYLAND_DISPLAY:-wayland-1}"
+      XDG_RUNTIME_DIR: "${XDG_RUNTIME_DIR}"
+      PULSE_SERVER: "unix:${XDG_RUNTIME_DIR}/pulse/native"
+    volumes:
+      - "${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}"
+      - /sys/class/drm:/sys/class/drm:ro
+    devices:
+      - /dev/dri
+      - /dev/snd
