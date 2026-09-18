@@ -10,8 +10,8 @@ import hashlib
 import psutil
 import httpx
 import magic
+import socket
 import time
-import wget
 # import gi
 import os
 import platform
@@ -115,6 +115,38 @@ def clearFiles():
         recentLogs("Clearing files...")
     if os.path.exists('/tmp/controlFile.html'):
         os.remove('/tmp/controlFile.html')
+
+def download_file(url, dest, timeout=15):
+    """Download url to dest with a bounded timeout so a network stall can't hang the process forever.
+
+    Args:
+        url (str): file to download
+        dest (str): local path to write to
+        timeout (int): seconds to allow for the whole request/download
+    """
+    with httpx.stream("GET", url, timeout=timeout, follow_redirects=True) as response:
+        response.raise_for_status()
+        with open(dest, "wb") as f:
+            for chunk in response.iter_bytes():
+                f.write(chunk)
+
+def sd_notify(state: str):
+    """Send a message to systemd's sd_notify socket (readiness/watchdog); no-op if not running under systemd."""
+    addr = os.environ.get('NOTIFY_SOCKET')
+    if not addr:
+        return
+    if addr.startswith('@'):
+        addr = '\0' + addr[1:]
+    sock = None
+    try:
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        sock.connect(addr)
+        sock.sendall(state.encode())
+    except OSError:
+        pass
+    finally:
+        if sock:
+            sock.close()
 
 def md5checksum(fname):
     """checksum function to check media file being played back, sent to server to verify accuracy
@@ -226,10 +258,10 @@ def startDisplay(controlFile, signageFile):
         PID: process object from spawning the player
     """
     recentLogs("Downloading Signage File")
-    wget.download(signageFile, out='/tmp/signageFile')
+    download_file(signageFile, '/tmp/signageFile')
     if not controlFile == '':
         recentLogs("Downloading Control File.")
-        wget.download(controlFile, out='/tmp/controlFile.html')
+        download_file(controlFile, '/tmp/controlFile.html')
     try:
         fileType = magic.from_file(
             '/tmp/signageFile', mime=True)
@@ -312,8 +344,11 @@ def getIP():
     return ipAddress
 
 def getScreenResolution():
-    resolution = subprocess.run(['/home/pi/pi-signage-pi-client/resolution.sh'],
-        stdout=subprocess.PIPE).stdout.decode('utf-8')
+    try:
+        resolution = subprocess.run(['/home/pi/pi-signage-pi-client/resolution.sh'],
+            stdout=subprocess.PIPE, timeout=5).stdout.decode('utf-8')
+    except subprocess.TimeoutExpired:
+        return ''
 
     resolution = resolution.replace('\n', ' ')
 
@@ -380,7 +415,11 @@ def main():
     os.environ['WAYLAND_DISPLAY'] = os.environ.get('WAYLAND_DISPLAY', 'wayland-1')
     os.environ['XDG_RUNTIME_DIR'] = os.environ.get('XDG_RUNTIME_DIR', f'/run/user/{os.getuid()}')
     lastConnectFlagDefault = False
+    sd_notify('READY=1')
     while True:
+        # Tells systemd's watchdog we're still alive; only reached once the previous
+        # iteration's bounded network/subprocess calls have returned.
+        sd_notify('WATCHDOG=1')
         if loopDelayCounter == 5:
             ipAddress = getIP()
             ScreenResolution = getScreenResolution()
@@ -447,7 +486,7 @@ def main():
                     clearFiles()
                     # Pull Default ONCE
                     signageFile = response.json()['contentPath']
-                    wget.download(signageFile, out='/tmp/signageFile')
+                    download_file(signageFile, '/tmp/signageFile')
                     hash = md5checksum('/tmp/signageFile')
                     # Close the browser
                     if browserPID:
@@ -471,11 +510,14 @@ def main():
                             ssPath],
                             capture_output=True,
                             text=True,
+                            timeout=10,
                             check=True)
                 screenshot_taken = True
             except subprocess.CalledProcessError as e:
                 recentLogs(f"Error taking screenshot: {e}")
                 recentLogs(f"Error output: {e.stderr}")
+            except subprocess.TimeoutExpired:
+                recentLogs("Timed out taking screenshot")
             # Only upload screenshot if grim succeeded
             if screenshot_taken:
                 data = {'piName': piName}

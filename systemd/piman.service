@@ -1,0 +1,18 @@
+[Unit]
+Description=Pi Signage Client
+After=network-online.target graphical-session.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+NotifyAccess=main
+ExecStart=/usr/bin/python3 /home/pi/pi-signage-pi-client/pisignage.py
+Restart=always
+RestartSec=5
+# Each loop iteration must reach sd_notify(WATCHDOG=1) within this window
+# (bounded by the ~5s server timeout + 15s download timeout + 10s screenshot
+# timeout + 30s sleep), otherwise systemd kills and restarts the process.
+WatchdogSec=90
+
+[Install]
+WantedBy=default.target

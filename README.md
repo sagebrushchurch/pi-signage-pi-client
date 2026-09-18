@@ -44,6 +44,23 @@ Run the client script:
 python3 pisignage.py
 ```
 
+### Running as a systemd service (with watchdog)
+
+The client is designed to run indefinitely under `systemd` as a `--user` service named
+`piman.service`, using [`systemd/piman.service`](systemd/piman.service) as a template:
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp systemd/piman.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now piman.service
+```
+
+All network downloads and subprocess calls (screenshotting, resolution detection) have
+bounded timeouts, and the client pings systemd's watchdog once per loop iteration via
+`sd_notify`. If a call ever stalls past `WatchdogSec` (e.g. the network drops mid-download),
+systemd kills and restarts the process automatically instead of it hanging forever.
+
 ## Hardware Notes
 
 *   **HiGole1 MiniPC**: Wifi drivers may need to be installed manually: https://github.com/lwfinger/rtw89
