@@ -43,5 +43,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=build /opt/venv /opt/venv
 COPY . /app
+RUN chmod +x /app/resolution.sh
 
 CMD ["/opt/venv/bin/python3", "/app/pisignage.py"]
