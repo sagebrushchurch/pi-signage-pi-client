@@ -4,7 +4,7 @@ This is the client software designed to run on Raspberry Pi (or compatible devic
 
 ## Features
 
-*   **Content Playback**: Supports Video (via `ffplay`), Audio, Webpages (via `firefox`), and Images.
+*   **Content Playback**: Supports Video/Audio/Images (via `mpv`) and Webpages (via `firefox`).
 *   **Hardware Acceleration**: Detects and uses hardware decoding (H.264/HEVC) on supported devices.
 *   **Remote Management**: Polls the backend for schedule updates and commands.
 *   **Monitoring**: Reports system load, uptime, and takes screenshots of the current display to upload to the server.
@@ -13,16 +13,16 @@ This is the client software designed to run on Raspberry Pi (or compatible devic
 ## Requirements
 
 *   Python 3.8+
-*   `ffmpeg` / `ffplay`
-*   `firefox` (for web and image display)
-*   `scrot` (or `grim` for Wayland screenshots)
+*   `mpv`
+*   `firefox`
+*   `grim` for Wayland screenshots
 *   `cec-utils`
 
 ## Installation
 
 1.  **System Dependencies**:
     ```bash
-    sudo apt install scrot cec-utils ffmpeg firefox-esr
+    sudo apt install cec-utils firefox-esr grim mpv python3-magic
     ```
 
 2.  **Python Dependencies**:
@@ -43,6 +43,42 @@ Run the client script:
 ```bash
 python3 pisignage.py
 ```
+
+## Docker
+
+This repository now includes a `Dockerfile` for running the client in a container.
+On Debian hosts running `sway`, start the container as the same logged-in user so it can
+reach the Wayland and audio sockets:
+
+```bash
+docker build -t pi-signage-client .
+
+docker run -d \
+  --name pi-signage-client \
+  --restart unless-stopped \
+  --network host \
+  --user "$(id -u):$(id -g)" \
+  --group-add audio \
+  --group-add video \
+  -e WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}" \
+  -e XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR}" \
+  -e PULSE_SERVER="unix:${XDG_RUNTIME_DIR}/pulse/native" \
+  -v "${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}" \
+  -v /sys/class/drm:/sys/class/drm:ro \
+  --device /dev/dri \
+  --device /dev/snd \
+  pi-signage-client
+```
+
+Notes:
+
+* `--network host` lets the client report the host's network information instead of a
+  container-only address.
+* `--device /dev/dri` enables hardware-accelerated video where supported.
+* `--device /dev/snd` plus the Pulse socket mount provide audio passthrough for `mpv`
+  and Firefox on a typical Debian + sway setup.
+* `pisignage.py` resolves `resolution.sh` relative to the repository, so no host-specific
+  `/home/pi/...` path is required in the container.
 
 ### Running as a systemd service (with watchdog)
 

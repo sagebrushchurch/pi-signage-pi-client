@@ -14,6 +14,7 @@ import time
 # import gi
 import os
 import platform
+import shlex
 
 # gi.require_version('Gdk', '3.0')
 # from gi.repository import Gdk
@@ -25,6 +26,11 @@ else:
     BASE_URL = 'https://piman.sagebrush.work/pi_manager_api'
 
 PI_CLIENT_VERSION = '2.10.0'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RESOLUTION_SCRIPT = os.environ.get(
+    'PISIGNAGE_RESOLUTION_SCRIPT',
+    os.path.join(BASE_DIR, 'resolution.sh')
+)
 
 
 def get_device_model():
@@ -77,8 +83,8 @@ def get_device_model():
 
 DEVICE_MODEL = get_device_model()
 
-browser = 'firefox'
-browser_flags = '--kiosk'
+browser = os.environ.get('PISIGNAGE_BROWSER', 'firefox')
+browser_flags = shlex.split(os.environ.get('PISIGNAGE_BROWSER_FLAGS', '--kiosk'))
 logList = []
 
 def clearFiles():
@@ -194,7 +200,7 @@ def avPID():
 
 def linkPID():
     pid = subprocess.Popen([browser,
-                            browser_flags,
+                            *browser_flags,
                             "/tmp/signageFile"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
@@ -217,7 +223,7 @@ def imagePID():
 
 def otherFilePID():
     pid = subprocess.Popen([browser,
-                            browser_flags,
+                            *browser_flags,
                             "/tmp/signageFile"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
@@ -326,7 +332,7 @@ def getIP():
 
 def getScreenResolution():
     try:
-        resolution = subprocess.run(['/home/pi/pi-signage-pi-client/resolution.sh'],
+        resolution = subprocess.run(['bash', RESOLUTION_SCRIPT],
             stdout=subprocess.PIPE, timeout=5).stdout.decode('utf-8')
     except (subprocess.TimeoutExpired, OSError):
         return ''
