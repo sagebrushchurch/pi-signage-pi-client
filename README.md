@@ -22,7 +22,7 @@ This is the client software designed to run on Raspberry Pi (or compatible devic
 
 1.  **System Dependencies**:
     ```bash
-    sudo apt install cec-utils firefox-esr grim mpv python3-magic
+    sudo apt install cec-utils firefox-esr grim libmagic1 mpv
     ```
 
 2.  **Python Dependencies**:

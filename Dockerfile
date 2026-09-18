@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /app/requirements.txt
-RUN python3 -m venv --system-site-packages /opt/venv \
+RUN python3 -m venv /opt/venv \
     && /opt/venv/bin/pip install --no-cache-dir -r /app/requirements.txt
 
 FROM debian:bookworm-slim
@@ -32,16 +32,16 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    cec-utils \
     firefox-esr \
     grim \
     libcec6 \
     libmagic1 \
     mpv \
     python3 \
-    python3-magic \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /opt/venv /opt/venv
 COPY . /app
 
-CMD ["python3", "/app/pisignage.py"]
+CMD ["/opt/venv/bin/python3", "/app/pisignage.py"]
